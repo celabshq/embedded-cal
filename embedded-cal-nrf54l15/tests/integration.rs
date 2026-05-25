@@ -38,6 +38,14 @@ mod tests {
     }
 
     #[test]
+    fn test_hmac_sha256(state: &mut super::TestState) {
+        embedded_cal::test_hmac_algorithm_hmacsha256::<
+            <embedded_cal_software::Extender<ImplementSha256Short> as embedded_cal::HmacProvider>::Algorithm,
+        >();
+        testvectors::test_hmac_sha256(&mut state.cal);
+    }
+
+    #[test]
     fn test_tryrng(state: &mut super::TestState) {
         embedded_cal::test_tryrng(&mut state.cal);
     }
