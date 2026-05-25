@@ -1,6 +1,22 @@
 use digest::Digest;
 
-pub struct RustcryptoCal;
+pub struct RustcryptoCal {
+    _private: (),
+}
+
+impl RustcryptoCal {
+    pub const fn new() -> Self {
+        Self {
+            _private: ()
+        }
+    }
+}
+
+impl Default for RustcryptoCal {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum HashAlgorithm {
@@ -85,7 +101,7 @@ mod tests {
 
     #[test]
     fn test_hash_algorithm_sha256() {
-        let mut cal = RustcryptoCal;
+        let mut cal = RustcryptoCal::new();
 
         embedded_cal::test_hash_algorithm_sha256::<
             <RustcryptoCal as embedded_cal::HashProvider>::Algorithm,
