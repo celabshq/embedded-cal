@@ -199,7 +199,7 @@ impl embedded_cal::HmacProvider for Stm32wba55Cal {
     type HmacState = HmacState;
     type HmacResult = HmacResult;
 
-    fn init(&mut self, algorithm: Self::Algorithm, key: &[u8]) -> Self::HmacState {
+    fn init_with_keydata(&mut self, algorithm: Self::Algorithm, key: &[u8]) -> Self::HmacState {
         match algorithm {
             HmacAlgorithm::HmacSha256 => {
                 // Normalise key: zero-pad short keys; hash long keys per RFC 2104.

@@ -5,13 +5,13 @@ pub trait HmacProvider {
     /// Output of an HMAC operation.
     type HmacResult: AsRef<[u8]>;
 
-    fn init(&mut self, algorithm: Self::Algorithm, key: &[u8]) -> Self::HmacState;
+    fn init_with_keydata(&mut self, algorithm: Self::Algorithm, key: &[u8]) -> Self::HmacState;
     fn update(&mut self, state: &mut Self::HmacState, data: &[u8]);
     fn finalize(&mut self, state: Self::HmacState) -> Self::HmacResult;
 
     /// Compute HMAC over contiguous in-memory data in a single pass.
     fn hmac(&mut self, algorithm: Self::Algorithm, key: &[u8], data: &[u8]) -> Self::HmacResult {
-        let mut state = self.init(algorithm, key);
+        let mut state = self.init_with_keydata(algorithm, key);
         self.update(&mut state, data);
         self.finalize(state)
     }

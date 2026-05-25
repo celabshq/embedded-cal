@@ -352,7 +352,7 @@ impl<EC: ExtenderConfig> HmacProvider for Extender<EC> {
     type HmacState = HmacState<EC>;
     type HmacResult = HmacResult;
 
-    fn init(&mut self, algorithm: Self::Algorithm, key: &[u8]) -> Self::HmacState {
+    fn init_with_keydata(&mut self, algorithm: Self::Algorithm, key: &[u8]) -> Self::HmacState {
         match algorithm {
             HmacAlgorithm::HmacSha256 => {
                 // Normalise key to exactly SHA2SHORT_BLOCK_SIZE bytes.
