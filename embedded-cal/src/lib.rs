@@ -15,4 +15,4 @@ pub use hash::{HashAlgorithm, HashProvider, NoHashAlgorithms, test_hash_algorith
 pub use hmac::{HmacAlgorithm, HmacProvider, NoHmacAlgorithms, test_hmac_algorithm_hmacsha256};
 pub use rng::test_tryrng;
 
-pub trait Cal: HashProvider + HmacProvider {}
+pub trait Cal: HashProvider + HmacProvider + AeadProvider {}
