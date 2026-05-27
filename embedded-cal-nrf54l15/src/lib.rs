@@ -1,4 +1,5 @@
 #![no_std]
+mod aead;
 mod descriptor;
 mod try_rng;
 
