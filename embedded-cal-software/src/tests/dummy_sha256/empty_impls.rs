@@ -29,7 +29,7 @@ impl embedded_cal::HmacProvider for DummySha256 {
     type HmacState = embedded_cal::NoHmacAlgorithms;
     type HmacResult = embedded_cal::NoHmacAlgorithms;
 
-    fn load_from_keydata(&mut self, algorithm: Self::Algorithm, key: &[u8]) -> Self::Key {
+    fn load_from_keydata(&mut self, algorithm: Self::Algorithm, _key: &[u8]) -> Self::Key {
         match algorithm {}
     }
 
@@ -43,5 +43,36 @@ impl embedded_cal::HmacProvider for DummySha256 {
 
     fn finalize(&mut self, state: Self::HmacState) -> Self::HmacResult {
         match state {}
+    }
+}
+
+impl embedded_cal::AeadProvider for DummySha256 {
+    type Algorithm = embedded_cal::NoAeadAlgorithms;
+    type Key = embedded_cal::NoAeadAlgorithms;
+    type Tag = embedded_cal::NoAeadAlgorithms;
+
+    fn load_from_keydata(&mut self, alg: Self::Algorithm, _key: &[u8]) -> Self::Key {
+        match alg {}
+    }
+
+    fn encrypt_in_place(
+        &mut self,
+        key: &Self::Key,
+        _nonce: &[u8],
+        _message: &mut [u8],
+        _aad: impl embedded_cal::AadGenerator,
+    ) -> Self::Tag {
+        match *key {}
+    }
+
+    fn decrypt_in_place(
+        &mut self,
+        key: &Self::Key,
+        _nonce: &[u8],
+        _message: &mut [u8],
+        _tag: &[u8],
+        _aad: impl embedded_cal::AadGenerator,
+    ) -> Result<(), embedded_cal::DecryptionFailed> {
+        match *key {}
     }
 }

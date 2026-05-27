@@ -9,6 +9,7 @@ use stm32_metapac::{
         vals::{Clkdiv, Htcfg, Nistc, RngConfig1, RngConfig2, RngConfig3},
     },
 };
+mod aead;
 mod try_rng;
 
 const WORD_SIZE: usize = 4;
