@@ -16,9 +16,9 @@ impl Cal for EmptyCal {}
 // free to copy those out into your Cal implementations.
 
 impl HashProvider for EmptyCal {
-    type Algorithm = NoHashAlgorithms;
-    type HashState = NoHashAlgorithms;
-    type HashResult = NoHashAlgorithms;
+    type Algorithm = NoAlgorithms;
+    type HashState = NoAlgorithms;
+    type HashResult = NoAlgorithms;
 
     fn init(&mut self, algorithm: Self::Algorithm) -> Self::HashState {
         match algorithm {}
@@ -34,10 +34,10 @@ impl HashProvider for EmptyCal {
 }
 
 impl HmacProvider for EmptyCal {
-    type Algorithm = NoHmacAlgorithms;
-    type Key = NoHmacAlgorithms;
-    type HmacState = NoHmacAlgorithms;
-    type HmacResult = NoHmacAlgorithms;
+    type Algorithm = NoAlgorithms;
+    type Key = NoAlgorithms;
+    type HmacState = NoAlgorithms;
+    type HmacResult = NoAlgorithms;
 
     fn load_from_keydata(&mut self, algorithm: Self::Algorithm, _key: &[u8]) -> Self::Key {
         match algorithm {}
@@ -57,9 +57,9 @@ impl HmacProvider for EmptyCal {
 }
 
 impl AeadProvider for EmptyCal {
-    type Algorithm = NoAeadAlgorithms;
-    type Key = NoAeadAlgorithms;
-    type Tag = NoAeadAlgorithms;
+    type Algorithm = NoAlgorithms;
+    type Key = NoAlgorithms;
+    type Tag = NoAlgorithms;
 
     fn load_from_keydata(&mut self, alg: Self::Algorithm, _key: &[u8]) -> Self::Key {
         match alg {}
@@ -102,6 +102,46 @@ impl rand_core::TryRng for EmptyCal {
 
     fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), Self::Error> {
         Err(NoRng)
+    }
+}
+
+/// Type which an implementation of [`Cal`][crate::Cal] can use when it implements no
+/// algorithm for a particular provider.
+///
+/// This type is uninhabited and can stand in for all of the `Algorithm` associated types as well
+/// as state and result types.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum NoAlgorithms {}
+
+impl AeadAlgorithm for NoAlgorithms {
+    fn key_length(&self) -> usize {
+        match *self {}
+    }
+
+    fn tag_length(&self) -> usize {
+        match *self {}
+    }
+
+    fn nonce_length(&self) -> usize {
+        match *self {}
+    }
+}
+
+impl HashAlgorithm for NoAlgorithms {
+    fn len(&self) -> usize {
+        match *self {}
+    }
+}
+
+impl HmacAlgorithm for NoAlgorithms {
+    fn len(&self) -> usize {
+        match *self {}
+    }
+}
+
+impl AsRef<[u8]> for NoAlgorithms {
+    fn as_ref(&self) -> &[u8] {
+        match *self {}
     }
 }
 
