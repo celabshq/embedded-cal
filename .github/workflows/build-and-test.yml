@@ -21,7 +21,7 @@ jobs:
     - name: Check if code is well formatted
       run: cargo fmt --check
     - name: run `cargo check`
-      run: RUSTFLAGS="-D warnings" cargo check
+      run: RUSTFLAGS="-D warnings" cargo check --workspace
     - name: run `cargo clippy`
       run: cargo clippy --workspace -- --deny clippy::all
     - name: run `cargo doc`
