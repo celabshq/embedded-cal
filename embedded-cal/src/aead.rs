@@ -115,6 +115,26 @@ pub trait AeadAlgorithm: Sized + PartialEq + Eq + core::fmt::Debug + Clone {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum NoAeadAlgorithms {}
 
+impl AeadAlgorithm for NoAeadAlgorithms {
+    fn key_length(&self) -> usize {
+        match *self {}
+    }
+
+    fn tag_length(&self) -> usize {
+        match *self {}
+    }
+
+    fn nonce_length(&self) -> usize {
+        match *self {}
+    }
+}
+
+impl AsRef<[u8]> for NoAeadAlgorithms {
+    fn as_ref(&self) -> &[u8] {
+        match *self {}
+    }
+}
+
 /// Tool for providing the AAD (Additional Authenticated Data) in a scatter-gather fashion.
 pub trait AadGenerator {
     // FIXME: What precise guarantees do we want to ask/give?
