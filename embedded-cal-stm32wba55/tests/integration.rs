@@ -59,6 +59,11 @@ mod tests {
     }
 
     #[test]
+    fn test_hkdf_sha256(state: &mut super::TestState) {
+        testvectors::test_hkdf_sha256(&mut state.raw);
+    }
+
+    #[test]
     fn test_tryrng(state: &mut super::TestState) {
         embedded_cal::test_tryrng(&mut state.cal);
     }
