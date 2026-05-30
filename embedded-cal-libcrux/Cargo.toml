@@ -10,7 +10,7 @@ version.workspace = true
 
 [dependencies]
 embedded-cal.path = "../embedded-cal"
-libcrux-sha2 = "0.0.6"
+libcrux-sha2 = "0.0.7"
 
 [dev-dependencies]
 testvectors.path = "../testvectors"

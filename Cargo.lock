@@ -249,7 +249,7 @@ name = "embedded-cal"
 version = "0.1.0"
 dependencies = [
  "hax-lib 0.3.5",
- "rand_core 0.10.1",
+ "rand_core",
 ]
 
 [[package]]
@@ -274,7 +274,7 @@ dependencies = [
  "embedded-cal-software-demo",
  "nrf-pac",
  "panic-probe",
- "rand_core 0.10.1",
+ "rand_core",
  "testvectors",
 ]
 
@@ -295,7 +295,7 @@ name = "embedded-cal-software-demo"
 version = "0.1.0"
 dependencies = [
  "embedded-cal",
- "rand_core 0.10.1",
+ "rand_core",
  "testvectors",
 ]
 
@@ -311,7 +311,7 @@ dependencies = [
  "embedded-cal",
  "embedded-cal-software-demo",
  "panic-probe",
- "rand_core 0.10.1",
+ "rand_core",
  "stm32-metapac",
  "testvectors",
 ]
@@ -458,9 +458,9 @@ checksum = "58f929b4d672ea937a23a1ab494143d968337a5f47e56d0815df1e0890ddf174"
 
 [[package]]
 name = "libcrux-hacl-rs"
-version = "0.0.4"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2637dc87d158e1f1b550fd9b226443e84153fded4de69028d897b534d16d22e6"
+checksum = "66106db376ae249af86911aee048cf73ea1f394d6653026fc988dd22cf2a4ace"
 dependencies = [
  "libcrux-macros",
 ]
@@ -486,9 +486,9 @@ dependencies = [
 
 [[package]]
 name = "libcrux-sha2"
-version = "0.0.6"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9d253473f259fc74a280c43f29c464f7e374abdf28b4942234dc707f529d4b7"
+checksum = "cadb9239002b82f2ddad65ad8a4c67ca55db4eb51a039247c879a4af27eb214b"
 dependencies = [
  "libcrux-hacl-rs",
  "libcrux-macros",
@@ -497,9 +497,9 @@ dependencies = [
 
 [[package]]
 name = "libcrux-traits"
-version = "0.0.6"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "812e4fa89f3f5e34b47f928b22b1b78395a0d4ec23b1f583db635f128159d65f"
+checksum = "2613bf3dbf3670777bd6ecc3bcdd2d7a642663656b35ed2823529c4f1db0c9e9"
 dependencies = [
  "libcrux-secrets",
  "rand",
@@ -634,18 +634,12 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
 name = "rand"
-version = "0.9.4"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44c5af06bb1b7d3216d91932aed5265164bf384dc89cd6ba05cf59a35f5f76ea"
+checksum = "d2e8e8bcc7961af1fdac401278c6a831614941f6164ee3bf4ce61b7edb162207"
 dependencies = [
- "rand_core 0.9.5",
+ "rand_core",
 ]
-
-[[package]]
-name = "rand_core"
-version = "0.9.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76afc826de14238e6e8c374ddcc1fa19e374fd8dd986b0d2af0d02377261d83c"
 
 [[package]]
 name = "rand_core"
