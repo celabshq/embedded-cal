@@ -12,6 +12,9 @@ impl embedded_cal::DhProvider for RustcryptoCal {
         // We're not wrapping anything, so no point in deferring to the self RNG.
         Some(VisibleSecretKey(match alg {
             DhAlgorithm::P256 => SecretKey::P256(p256::SecretKey::random(&mut OldRng(self))),
+            DhAlgorithm::X25519 => {
+                SecretKey::X25519(x25519_dalek::StaticSecret::random_from_rng(OldRng(self)))
+            }
         }))
     }
 
@@ -28,6 +31,11 @@ impl embedded_cal::DhProvider for RustcryptoCal {
                     .try_into()
                     .expect("MAX_SHARED_SECRET_LENGTH is long enough")
             }
+            (SecretKey::X25519(secret_key), PublicKey::X25519(public_key)) => secret_key
+                .diffie_hellman(public_key)
+                .to_bytes()
+                .try_into()
+                .expect("MAX_SHARED_SECRET_LENGTH is long enough"),
             _ => return Err(embedded_cal::IncompatibleKeys),
         }))
     }
@@ -35,6 +43,7 @@ impl embedded_cal::DhProvider for RustcryptoCal {
     fn public_key(&mut self, private: &Self::SecretKey) -> Self::PublicKey {
         match private {
             SecretKey::P256(secret_key) => PublicKey::P256(secret_key.public_key()),
+            SecretKey::X25519(secret_key) => PublicKey::X25519(secret_key.into()),
         }
     }
 
@@ -46,12 +55,14 @@ impl embedded_cal::DhProvider for RustcryptoCal {
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum DhAlgorithm {
     P256,
+    X25519,
 }
 
 impl embedded_cal::DhAlgorithm for DhAlgorithm {
     fn output_length(&self) -> usize {
         match self {
             DhAlgorithm::P256 => 32,
+            DhAlgorithm::X25519 => 32,
         }
     }
 }
@@ -66,10 +77,14 @@ impl From<VisibleSecretKey> for SecretKey {
 
 pub enum SecretKey {
     P256(p256::SecretKey),
+    // FIXME: x25519_dalek differentiates between StaticSecret and ReusableSecret, could do that here
+    // too (probably we'd have a ReusableSecret here but a StaticSecret in VisibleSecretKey)
+    X25519(x25519_dalek::StaticSecret),
 }
 
 pub enum PublicKey {
     P256(p256::PublicKey),
+    X25519(x25519_dalek::PublicKey),
 }
 
 const MAX_SHARED_SECRET_LENGTH: usize = 32;

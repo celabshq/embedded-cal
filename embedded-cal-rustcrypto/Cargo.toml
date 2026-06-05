@@ -23,6 +23,7 @@ getrandom = { version = "0.4", default-features = false }
 rand_core.workspace = true
 # needed for p256 generation
 rand_core_06 = { package = "rand_core", version = "0.6" }
+x25519-dalek = { version = "2.0.1", default-features = false, features = ["static_secrets", "zeroize"] }
 
 [features]
 ## Enables the use of the system allocator for AEAD algorithms.
