@@ -10,10 +10,11 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
     type PublicKey = <EC::Base as DhProvider>::PublicKey;
     type SharedSecret = <EC::Base as DhProvider>::SharedSecret;
 
-    fn generate_visible(&mut self, alg: Self::DhAlgorithm) -> Option<Self::VisibleSecretKey>
+    fn generate_visible(&mut self, _alg: Self::DhAlgorithm) -> Option<Self::VisibleSecretKey>
     where
         Self: rand_core::TryRng,
     {
+        // pending resolution of https://github.com/lake-rs/embedded-cal/issues/51
         todo!()
     }
 
@@ -22,19 +23,18 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
         private: &Self::SecretKey,
         public: &Self::PublicKey,
     ) -> Result<Self::SharedSecret, embedded_cal::IncompatibleKeys> {
-        todo!()
+        self.0.shared_secret(private, public)
     }
 
     fn public_key(&mut self, private: &Self::SecretKey) -> Self::PublicKey {
-        todo!()
+        self.0.public_key(private)
     }
 
     fn raw_secret_bytes<'s>(
         &mut self,
         secret: &'s Self::SharedSecret,
     ) -> impl AsRef<[u8]> + use<'s, EC> {
-        todo!();
-        &[]
+        self.0.raw_secret_bytes(secret)
     }
 
     #[allow(unreachable_code, reason = "needed to satisfy RPIT")]
@@ -42,16 +42,15 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
         &mut self,
         secretkey: &'s Self::VisibleSecretKey,
     ) -> impl AsRef<[u8]> + use<'s, EC> {
-        todo!();
-        &[]
+        self.0.export_secretkey_bytes(secretkey)
     }
 
     fn import_secretkey_bytes(
         &mut self,
         alg: Self::DhAlgorithm,
-        _secret: &[u8],
+        secret: &[u8],
     ) -> Result<Self::VisibleSecretKey, embedded_cal::ImportError> {
-        todo!();
+        self.0.import_secretkey_bytes(alg, secret)
     }
 
     #[allow(unreachable_code, reason = "needed to satisfy RPIT")]
@@ -59,15 +58,14 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
         &mut self,
         public: &'p Self::PublicKey,
     ) -> impl AsRef<[u8]> + use<'p, EC> {
-        todo!();
-        &[]
+        self.0.export_publickey_bytes(public)
     }
 
     fn import_publickey_bytes(
         &mut self,
         alg: Self::DhAlgorithm,
-        _data: &[u8],
+        data: &[u8],
     ) -> Result<Self::PublicKey, embedded_cal::ImportError> {
-        todo!()
+        self.0.import_publickey_bytes(alg, data)
     }
 }
