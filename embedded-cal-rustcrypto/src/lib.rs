@@ -276,5 +276,9 @@ mod tests {
 
         embedded_cal::test_dh_selftest(&mut cal, p256);
         embedded_cal::test_dh_selftest(&mut cal, x25519);
+
+        for vec in testvectors::dh::RFC7748_X25519 {
+            vec.test_with(&mut cal);
+        }
     }
 }
