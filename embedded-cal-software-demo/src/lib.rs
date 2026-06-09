@@ -9,6 +9,7 @@ use embedded_cal::{Cal, plumbing::Plumbing};
 mod aead;
 mod dh;
 mod hash;
+mod hkdf;
 mod hmac;
 mod rng;
 
