@@ -94,10 +94,7 @@ impl<const PLUMBING: bool> DhProvider for EmptyCal<PLUMBING> {
     type PublicKey = NoAlgorithms;
     type SharedSecret = NoAlgorithms;
 
-    fn generate_visible(&mut self, alg: Self::DhAlgorithm) -> Option<Self::VisibleSecretKey>
-    where
-        Self: rand_core::TryRng,
-    {
+    fn generate_visible(&mut self, alg: Self::DhAlgorithm) -> Self::VisibleSecretKey {
         match alg {}
     }
 
@@ -153,24 +150,6 @@ impl<const PLUMBING: bool> DhProvider for EmptyCal<PLUMBING> {
         _data: &[u8],
     ) -> Result<Self::PublicKey, dh::ImportError> {
         match alg {}
-    }
-}
-
-impl<const PLUMBING: bool> rand_core::TryCryptoRng for EmptyCal<PLUMBING> {}
-
-impl<const PLUMBING: bool> rand_core::TryRng for EmptyCal<PLUMBING> {
-    type Error = NoRng;
-
-    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
-        Err(NoRng)
-    }
-
-    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
-        Err(NoRng)
-    }
-
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), Self::Error> {
-        Err(NoRng)
     }
 }
 
@@ -244,15 +223,3 @@ impl DhAlgorithm for NoAlgorithms {
         match *self {}
     }
 }
-
-/// Error type returned by [`EmptyCal`] when trying to obtain random numbers.
-#[derive(Debug)]
-pub struct NoRng;
-
-impl core::fmt::Display for NoRng {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str("no RNG available in empty Cal implementation")
-    }
-}
-
-impl core::error::Error for NoRng {}

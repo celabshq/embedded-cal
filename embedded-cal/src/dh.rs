@@ -43,18 +43,11 @@ pub trait DhProvider {
 
     /// Generates a secret key that is intended to be exported / shared (e.g. to be persisted
     /// across program executions).
-    fn generate_visible(&mut self, alg: Self::DhAlgorithm) -> Option<Self::VisibleSecretKey>
-    where
-        // FIXME: https://github.com/lake-rs/embedded-cal/issues/51
-        Self: rand_core::TryRng;
+    fn generate_visible(&mut self, alg: Self::DhAlgorithm) -> Self::VisibleSecretKey;
 
     /// Generates a secret key.
-    fn generate(&mut self, alg: Self::DhAlgorithm) -> Option<Self::SecretKey>
-    where
-        // FIXME: https://github.com/lake-rs/embedded-cal/issues/51
-        Self: rand_core::TryRng,
-    {
-        Some(self.generate_visible(alg)?.into())
+    fn generate(&mut self, alg: Self::DhAlgorithm) -> Self::SecretKey {
+        self.generate_visible(alg).into()
     }
 
     /// Exposes a visible secret key's secret.
@@ -187,9 +180,9 @@ pub fn test_dh_algorithm_ecdh_p256<DP: DhProvider>() {
     assert_eq!(cose_ecdh_1.output_length(), 32)
 }
 
-pub fn test_dh_selftest<C: crate::Cal + rand_core::TryCryptoRng>(cal: &mut C, alg: C::DhAlgorithm) {
-    let my_secret = cal.generate(alg.clone()).unwrap();
-    let peer_secret = cal.generate(alg).unwrap();
+pub fn test_dh_selftest<C: crate::Cal + rand_core::CryptoRng>(cal: &mut C, alg: C::DhAlgorithm) {
+    let my_secret = cal.generate(alg.clone());
+    let peer_secret = cal.generate(alg);
     let my_public = cal.public_key(&my_secret);
     let peer_public = cal.public_key(&peer_secret);
 
