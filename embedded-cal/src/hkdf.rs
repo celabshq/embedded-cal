@@ -9,62 +9,61 @@ pub enum HkdfError {
     InvalidOutputLength,
 }
 
-pub trait HkdfProvider {
-    type Algorithm: HmacAlgorithm;
-    /// Opaque input keying material. May be constructed from a DH shared secret
-    /// without the raw bytes ever being user-visible.
-    type Ikm: ?Sized;
-    /// Opaque pseudorandom key — output of Extract, input to Expand.
-    type Prk;
-    /// Opaque output keying material — output of Expand.
-    type Okm: ?Sized;
-
+/// An interface for using HKDF (defined in
+/// [RFC5869](https://datatracker.ietf.org/doc/html/rfc5869)).
+///
+/// # Current status and roadmap
+///
+/// This interface is currently provided by a single blanket implementation, as none of the
+/// compoenents initially considered (hardware accelerators) do anything special about it.
+///
+/// This will be revisited when extending work on inextractable secrets to HKDF extraction output.
+///
+/// Until then, this interface uses no associated types; after that, it will at least have a type
+/// for the extract step's output. It will likely *not* grow a dedicated Algorithm type, as HKDF is
+/// based on HMAC algorithms.
+pub trait HkdfProvider: HmacProvider {
     /// HKDF-Extract (RFC 5869): returns a pseudorandom key.
     ///
     /// When `salt` is `None`, a zero-filled byte string of `HashLen` bytes is used
     /// as the HMAC key (RFC 5869).
     fn hkdf_extract(
         &mut self,
-        alg: Self::Algorithm,
+        alg: <Self as HmacProvider>::Algorithm,
         salt: Option<&[u8]>,
-        ikm: &Self::Ikm,
-    ) -> Result<Self::Prk, HkdfError>;
+        ikm: &[u8],
+    ) -> Result<impl AsRef<[u8]> + use<Self>, HkdfError>;
 
     /// HKDF-Expand (RFC 5869): fills `okm` with derived key material.
     fn hkdf_expand(
         &mut self,
-        alg: Self::Algorithm,
-        prk: &Self::Prk,
+        alg: <Self as HmacProvider>::Algorithm,
+        prk: &[u8],
         info: &[u8],
-        okm: &mut Self::Okm,
+        okm: &mut [u8],
     ) -> Result<(), HkdfError>;
 
     /// Extract then expand in one call.
     fn hkdf(
         &mut self,
-        alg: Self::Algorithm,
+        alg: <Self as HmacProvider>::Algorithm,
         salt: Option<&[u8]>,
-        ikm: &Self::Ikm,
+        ikm: &[u8],
         info: &[u8],
-        okm: &mut Self::Okm,
+        okm: &mut [u8],
     ) -> Result<(), HkdfError> {
         let prk = self.hkdf_extract(alg.clone(), salt, ikm)?;
-        self.hkdf_expand(alg, &prk, info, okm)
+        self.hkdf_expand(alg, prk.as_ref(), info, okm)
     }
 }
 
 impl<H: HmacProvider> HkdfProvider for H {
-    type Algorithm = H::Algorithm;
-    type Ikm = [u8];
-    type Prk = H::HmacResult;
-    type Okm = [u8];
-
     fn hkdf_extract(
         &mut self,
-        alg: Self::Algorithm,
+        alg: <Self as HmacProvider>::Algorithm,
         salt: Option<&[u8]>,
         ikm: &[u8],
-    ) -> Result<Self::Prk, HkdfError> {
+    ) -> Result<impl AsRef<[u8]> + use<H>, HkdfError> {
         // When salt is absent, RFC 5869 uses HashLen zero bytes as the HMAC key.
         // Buffer covers standard algorithms up to SHA-512 (64 bytes).
         // Ideally this would be H::Algorithm::MAX_OUTPUT_LEN once const_trait_impl stabilises.
@@ -80,8 +79,8 @@ impl<H: HmacProvider> HkdfProvider for H {
 
     fn hkdf_expand(
         &mut self,
-        alg: Self::Algorithm,
-        prk: &Self::Prk,
+        alg: <Self as HmacProvider>::Algorithm,
+        prk: &[u8],
         info: &[u8],
         okm: &mut [u8],
     ) -> Result<(), HkdfError> {
@@ -89,7 +88,6 @@ impl<H: HmacProvider> HkdfProvider for H {
         if okm.len() > 255 * hash_len {
             return Err(HkdfError::OutputTooLong);
         }
-        let prk_bytes = prk.as_ref();
         // Ideally this would be H::Algorithm::MAX_OUTPUT_LEN once const_trait_impl stabilises.
         let mut t = [0u8; 64];
         if hash_len > t.len() {
@@ -102,7 +100,7 @@ impl<H: HmacProvider> HkdfProvider for H {
             // counter is 1-based block index; pos/hash_len+1 <= 255 enforced above
             let counter = (pos / hash_len + 1) as u8;
             // T(i) = HMAC-Hash(PRK, T(i-1) || info || i)
-            let mut state = self.init_with_keydata(alg.clone(), prk_bytes);
+            let mut state = self.init_with_keydata(alg.clone(), prk);
             if t_len > 0 {
                 HmacProvider::update(self, &mut state, &t[..t_len]);
             }
