@@ -1,4 +1,4 @@
-// ── BA411E AES engine — cryptomaster DMA tags and command words ──────────────────────────────────
+// # BA411E AES engine — cryptomaster DMA tags and command words
 //
 // Sources: sdk-nrf subsys/nrf_security/src/drivers/cracen/sxsymcrypt/src/{cmdma.h,cmaes.h,aead.c}
 //
