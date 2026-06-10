@@ -7,7 +7,7 @@ mod try_rng;
 use descriptor::{DescriptorChain, Input, Output};
 use nrf_pac::{cracen, cracencore};
 
-// CCM-256 encrypt needs 4 input descriptors (config, key, header+aad, plaintext) and
+// CCM encrypt needs 4 input descriptors (config, key, header+aad, plaintext) and
 // 2 output descriptors (ciphertext, tag). Decrypt needs 5 input (+ expected tag).
 const MAX_DESCRIPTOR_CHAIN_LEN: usize = 6;
 
@@ -16,17 +16,12 @@ pub struct Nrf54l15Cal {
     // it's possible to have a more granular ownership
     cracen: cracen::Cracen,
     cracen_core: cracencore::Cracencore,
-    ccm: nrf_pac::ccm::Ccm,
 }
 
 impl embedded_cal::Cal for Nrf54l15Cal {}
 
 impl Nrf54l15Cal {
-    pub fn new(
-        cracen: cracen::Cracen,
-        cracen_core: cracencore::Cracencore,
-        ccm: nrf_pac::ccm::Ccm,
-    ) -> Self {
+    pub fn new(cracen: cracen::Cracen, cracen_core: cracencore::Cracencore) -> Self {
         // Enable cryptomaster
         cracen.enable().write(|w| {
             w.set_cryptomaster(true);
@@ -47,7 +42,6 @@ impl Nrf54l15Cal {
         Self {
             cracen,
             cracen_core,
-            ccm,
         }
     }
 }

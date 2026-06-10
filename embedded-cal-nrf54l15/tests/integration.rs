@@ -21,17 +21,10 @@ mod tests {
 
     #[init]
     fn init() -> super::TestState {
-        let raw = embedded_cal_nrf54l15::Nrf54l15Cal::new(
-            nrf_pac::CRACEN_S,
-            nrf_pac::CRACENCORE_S,
-            nrf_pac::CCM00_S,
-        );
+        let raw = embedded_cal_nrf54l15::Nrf54l15Cal::new(nrf_pac::CRACEN_S, nrf_pac::CRACENCORE_S);
         // FIXME: How to make sure there is a exclusive reference for CRACEN_S?
-        let base = embedded_cal_nrf54l15::Nrf54l15Cal::new(
-            nrf_pac::CRACEN_S,
-            nrf_pac::CRACENCORE_S,
-            nrf_pac::CCM00_S,
-        );
+        let base =
+            embedded_cal_nrf54l15::Nrf54l15Cal::new(nrf_pac::CRACEN_S, nrf_pac::CRACENCORE_S);
 
         let cal = embedded_cal_software_demo::Extender::<ImplementSha256Short>::new(base);
 
