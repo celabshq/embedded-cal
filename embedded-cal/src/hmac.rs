@@ -50,6 +50,16 @@ pub trait HmacAlgorithm: Sized + PartialEq + Eq + core::fmt::Debug + Clone {
     /// buffers.
     const MAX_LEN: usize;
 
+    /// A `[u8; MAX_LEN]` type.
+    ///
+    /// This is needed as a workaround while limitation inconst generics mean that users (in
+    /// particular, HKDF implementations) can not create a local variable of type `[u8;
+    /// Self::HmacAlgorithm::MAX_LEN]`.
+    ///
+    /// The only sensible implementation is `[u8; MAX_LEN]`. Users of the trait may panic if it is
+    /// not, but must assume that it is anything for safety and security.
+    type MaxLenBuf: AsMut<[u8]> + Sized + Default;
+
     /// Output length in bytes.
     ///
     /// ## Constraints
