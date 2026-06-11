@@ -6,10 +6,18 @@
     reason = "folling algorithm convention"
 )]
 
+use embedded_cal::empty::EmptyCal;
+
 /// A minimal testable version of SHA256-but-no-blocks-or-dummy.
 ///
 /// All implementation follows the Wikipedia pseudocode.
-pub struct DummySha256;
+pub struct DummySha256(EmptyCal<false>);
+
+impl DummySha256 {
+    pub fn new() -> Self {
+        Self(EmptyCal)
+    }
+}
 
 mod empty_impls;
 
@@ -24,7 +32,13 @@ const k: [u32; 64] = [
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ];
 
-impl embedded_cal::Cal for DummySha256 {}
+impl embedded_cal::Cal for DummySha256 {
+    type DhProvider = EmptyCal<false>;
+
+    fn dh(&mut self) -> &mut Self::DhProvider {
+        &mut self.0
+    }
+}
 
 impl embedded_cal::plumbing::Plumbing for DummySha256 {}
 

@@ -1,10 +1,10 @@
 #![no_std]
 mod aead;
 mod descriptor;
-mod empty_impls;
 mod try_rng;
 
 use descriptor::{DescriptorChain, Input, Output};
+use embedded_cal::empty::EmptyCal;
 use nrf_pac::{cracen, cracencore};
 
 // CCM encrypt needs 4 input descriptors (config, key, header+aad, plaintext) and
@@ -16,9 +16,18 @@ pub struct Nrf54l15Cal {
     // it's possible to have a more granular ownership
     cracen: cracen::Cracen,
     cracen_core: cracencore::Cracencore,
+
+    // Null-provider for everything we do *not* implement
+    empty: EmptyCal<false>,
 }
 
-impl embedded_cal::Cal for Nrf54l15Cal {}
+impl embedded_cal::Cal for Nrf54l15Cal {
+    type DhProvider = EmptyCal<false>;
+
+    fn dh(&mut self) -> &mut Self::DhProvider {
+        &mut self.empty
+    }
+}
 
 impl Nrf54l15Cal {
     pub fn new(cracen: cracen::Cracen, cracen_core: cracencore::Cracencore) -> Self {
@@ -42,6 +51,7 @@ impl Nrf54l15Cal {
         Self {
             cracen,
             cracen_core,
+            empty: EmptyCal,
         }
     }
 }

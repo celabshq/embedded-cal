@@ -9,7 +9,14 @@ use super::*;
 /// aspect that has no algorithms, never succeeds in doing anything).
 pub struct EmptyCal<const PLUMBING: bool>;
 
-impl<const PLUMBING: bool> Cal for EmptyCal<PLUMBING> {}
+// Eventually, we can probbly even drop the Cal impl
+impl<const PLUMBING: bool> Cal for EmptyCal<PLUMBING> {
+    type DhProvider = Self;
+
+    fn dh(&mut self) -> &mut Self::DhProvider {
+        self
+    }
+}
 
 // Those should all be shorter when <https://github.com/lake-rs/embedded-cal/issues/40> is
 // resolved; then again, the implementations that do make it short will live here. Until then, feel

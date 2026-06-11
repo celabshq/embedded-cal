@@ -180,7 +180,12 @@ pub fn test_dh_algorithm_ecdh_p256<DP: DhProvider>() {
     assert_eq!(cose_ecdh_1.output_length(), 32)
 }
 
-pub fn test_dh_selftest<C: crate::Cal + rand_core::CryptoRng>(cal: &mut C, alg: C::DhAlgorithm) {
+pub fn test_dh_selftest<C: crate::Cal + rand_core::CryptoRng>(
+    cal: &mut C,
+    alg: <C::DhProvider as DhProvider>::DhAlgorithm,
+) {
+    let cal = cal.dh();
+
     let my_secret = cal.generate(alg.clone());
     let peer_secret = cal.generate(alg);
     let my_public = cal.public_key(&my_secret);

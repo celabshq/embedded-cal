@@ -24,4 +24,10 @@ impl<EC: ExtenderConfig> Extender<EC> {
     }
 }
 
-impl<EC: ExtenderConfig> Cal for Extender<EC> {}
+impl<EC: ExtenderConfig> Cal for Extender<EC> {
+    type DhProvider = <EC::Base as Cal>::DhProvider;
+
+    fn dh(&mut self) -> &mut Self::DhProvider {
+        self.0.dh()
+    }
+}

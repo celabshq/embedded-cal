@@ -161,7 +161,7 @@ pub mod tests {
 
     #[test]
     fn test_hmac_sha256_on_dummy() {
-        let mut cal = Extender::<ImplementSha256Short>(dummy_sha256::DummySha256);
+        let mut cal = Extender::<ImplementSha256Short>(dummy_sha256::DummySha256::new());
 
         testvectors::test_hmac_sha256(&mut cal);
     }

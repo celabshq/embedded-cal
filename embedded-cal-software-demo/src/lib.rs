@@ -7,7 +7,6 @@
 use embedded_cal::{Cal, plumbing::Plumbing};
 
 mod aead;
-mod dh;
 mod hash;
 mod hkdf;
 mod hmac;
@@ -28,7 +27,13 @@ impl<EC: ExtenderConfig> Extender<EC> {
 pub struct Extender<EC: ExtenderConfig>(EC::Base);
 
 // All the required trait impls come from the modules.
-impl<EC: ExtenderConfig> embedded_cal::Cal for Extender<EC> {}
+impl<EC: ExtenderConfig> embedded_cal::Cal for Extender<EC> {
+    type DhProvider = <EC::Base as Cal>::DhProvider;
+
+    fn dh(&mut self) -> &mut Self::DhProvider {
+        self.0.dh()
+    }
+}
 
 #[cfg(test)]
 pub(crate) mod tests {

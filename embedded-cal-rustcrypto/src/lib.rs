@@ -43,7 +43,13 @@ impl Default for RustcryptoCal {
     }
 }
 
-impl embedded_cal::Cal for RustcryptoCal {}
+impl embedded_cal::Cal for RustcryptoCal {
+    type DhProvider = Self;
+
+    fn dh(&mut self) -> &mut Self::DhProvider {
+        self
+    }
+}
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum HashAlgorithm {

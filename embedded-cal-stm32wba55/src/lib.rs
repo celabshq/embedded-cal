@@ -1,5 +1,6 @@
 #![no_std]
 
+use embedded_cal::empty::EmptyCal;
 use embedded_cal::plumbing::hash::SHA2SHORT_BLOCK_SIZE;
 use stm32_metapac::{
     aes, hash,
@@ -10,7 +11,6 @@ use stm32_metapac::{
     },
 };
 mod aead;
-mod empty_impls;
 mod try_rng;
 
 const WORD_SIZE: usize = 4;
@@ -24,9 +24,18 @@ pub struct Stm32wba55Cal {
     rcc: rcc::Rcc,
     rng: rng::Rng,
     aes: aes::Aes,
+
+    // Null-provider for everything we do *not* implement
+    empty: EmptyCal<false>,
 }
 
-impl embedded_cal::Cal for Stm32wba55Cal {}
+impl embedded_cal::Cal for Stm32wba55Cal {
+    type DhProvider = EmptyCal<false>;
+
+    fn dh(&mut self) -> &mut Self::DhProvider {
+        &mut self.empty
+    }
+}
 
 impl Stm32wba55Cal {
     pub fn new(hash: hash::Hash, rcc: rcc::Rcc, rng: rng::Rng, aes: aes::Aes) -> Self {
@@ -45,6 +54,7 @@ impl Stm32wba55Cal {
             rcc,
             rng,
             aes,
+            empty: EmptyCal,
         };
         cal.init_rng();
         cal
