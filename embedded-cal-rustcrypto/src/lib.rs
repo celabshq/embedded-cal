@@ -1,5 +1,4 @@
 mod dh;
-mod hmac;
 mod rng;
 
 use digest::Digest;
@@ -8,6 +7,7 @@ pub struct RustcryptoCal {
     #[cfg(not(feature = "alloc"))]
     aead_buffer: [u8; 1024],
     _private: (),
+    empty: embedded_cal::empty::EmptyCal<false>,
 }
 
 impl RustcryptoCal {
@@ -16,6 +16,7 @@ impl RustcryptoCal {
             #[cfg(not(feature = "alloc"))]
             aead_buffer: [0; _],
             _private: (),
+            empty: embedded_cal::empty::EmptyCal,
         }
     }
 
@@ -47,7 +48,7 @@ impl embedded_cal::Cal for RustcryptoCal {
     type DhProvider = Self;
     type AeadProvider = Self;
     type HashProvider = Self;
-    type HmacProvider = Self;
+    type HmacProvider = embedded_cal::empty::EmptyCal<false>;
 
     fn dh(&mut self) -> &mut Self::DhProvider {
         self
@@ -59,7 +60,7 @@ impl embedded_cal::Cal for RustcryptoCal {
         self
     }
     fn hmac(&mut self) -> &mut Self::HmacProvider {
-        self
+        &mut self.empty
     }
 }
 
