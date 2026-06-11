@@ -1,6 +1,8 @@
 #![no_std]
 use hexlit::hex;
 
+pub mod dh;
+
 pub const SHA256HASHES: &[(&[u8], [u8; 32])] = &[
     (
         b"",
@@ -97,6 +99,198 @@ pub const AES_CCM_16_64_128: &[AeadCase] = &[
         ciphertext: &hex!("612f1092f1"),
         tag: &hex!("776f1c1668b3825e"),
     },
+    // From RFC3610 (Packet Vector #1)
+    AeadCase {
+        alg_cose: 10,
+        key: &hex!("c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"),
+        nonce: &hex!("00000003020100a0a1a2a3a4a5"),
+        aad: &hex!("0001020304050607"),
+        plaintext: &hex!("08090a0b0c0d0e0f101112131415161718191a1b1c1d1e"),
+        ciphertext: &hex!("588c979a61c663d2f066d0c2c0f989806d5f6b61dac384"),
+        tag: &hex!("17e8d12cfdf926e0"),
+    },
+    // From RFC3610 (Packet Vector #2)
+    AeadCase {
+        alg_cose: 10,
+        key: &hex!("c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"),
+        nonce: &hex!("00000004030201a0a1a2a3a4a5"),
+        aad: &hex!("0001020304050607"),
+        plaintext: &hex!("08090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"),
+        ciphertext: &hex!("72c91a36e135f8cf291ca894085c87e3cc15c439c9e43a3b"),
+        tag: &hex!("a091d56e10400916"),
+    },
+    // From RFC3610 (Packet Vector #3)
+    AeadCase {
+        alg_cose: 10,
+        key: &hex!("c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"),
+        nonce: &hex!("00000005040302a0a1a2a3a4a5"),
+        aad: &hex!("0001020304050607"),
+        plaintext: &hex!("08090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"),
+        ciphertext: &hex!("51b1e5f44a197d1da46b0f8e2d282ae871e838bb64da859657"),
+        tag: &hex!("4adaa76fbd9fb0c5"),
+    },
+    // From RFC3610 (Packet Vector #4)
+    AeadCase {
+        alg_cose: 10,
+        key: &hex!("c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"),
+        nonce: &hex!("00000006050403a0a1a2a3a4a5"),
+        aad: &hex!("000102030405060708090a0b"),
+        plaintext: &hex!("0c0d0e0f101112131415161718191a1b1c1d1e"),
+        ciphertext: &hex!("a28c6865939a9a79faaa5c4c2a9d4a91cdac8c"),
+        tag: &hex!("96c861b9c9e61ef1"),
+    },
+    // From RFC3610 (Packet Vector #5)
+    AeadCase {
+        alg_cose: 10,
+        key: &hex!("c0c1c2c3c4c5c6c7c8c9cacbcccdcecf"),
+        nonce: &hex!("00000007060504a0a1a2a3a4a5"),
+        aad: &hex!("000102030405060708090a0b"),
+        plaintext: &hex!("0c0d0e0f101112131415161718191a1b1c1d1e1f"),
+        ciphertext: &hex!("dcf1fb7b5d9e23fb9d4e131253658ad86ebdca3e"),
+        tag: &hex!("51e83f077d9c2d93"),
+    },
+];
+
+/// HKDF-SHA-256 test cases from RFC 5869 Appendix A.
+///
+/// Each entry is `(salt, ikm, info, expected_prk, expected_okm)`.
+/// `salt` is `None` for test case 3 (no salt provided).
+type HkdfCase = (
+    Option<&'static [u8]>,
+    &'static [u8],
+    &'static [u8],
+    [u8; 32],
+    &'static [u8],
+);
+pub const HKDF_SHA256: &[HkdfCase] = &[
+    // Test Case 1
+    (
+        Some(&hex!("000102030405060708090a0b0c")),
+        &hex!("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
+        &hex!("f0f1f2f3f4f5f6f7f8f9"),
+        hex!("077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5"),
+        &hex!(
+            "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865"
+        ),
+    ),
+    // Test Case 2
+    (
+        Some(&hex!(
+            "606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
+        )),
+        &hex!(
+            "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f"
+        ),
+        &hex!(
+            "b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+        ),
+        hex!("06a6b88c5853361a06104c9ceb35b45cef760014904671014a193f40c15fc244"),
+        &hex!(
+            "b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a99cac7827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5c1f3434f1d87"
+        ),
+    ),
+    // Test Case 3 — no salt, empty info
+    (
+        None,
+        &hex!("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
+        b"",
+        hex!("19ef24a32c717b167f33a91d6f648bdf96596776afdb6377ac434c1c293ccb04"),
+        &hex!(
+            "8da4e775a563c18f715f802a063c5a31b8a11f5c5ee1879ec3454e5f3c738d2d9d201395faa4b61a96c8"
+        ),
+    ),
+];
+
+pub fn test_hkdf_sha256<Cal>(cal: &mut Cal)
+where
+    Cal: embedded_cal::HkdfProvider,
+{
+    use embedded_cal::HmacAlgorithm;
+    let alg = <Cal as embedded_cal::HmacProvider>::Algorithm::from_cose_number(5i8)
+        .expect("HkdfProvider must recognize COSE 5 (HMAC-SHA-256)");
+
+    for (salt, ikm, info, expected_prk, expected_okm) in HKDF_SHA256 {
+        let prk = cal
+            .hkdf_extract(alg.clone(), *salt, ikm)
+            .expect("HKDF-Extract failed");
+        assert_eq!(
+            prk.as_ref(),
+            expected_prk.as_ref(),
+            "HKDF-Extract PRK mismatch"
+        );
+
+        let mut okm = [0u8; 82]; // large enough for test case 2 (82 bytes)
+        let okm = &mut okm[..expected_okm.len()];
+        cal.hkdf_expand(alg.clone(), prk.as_ref(), info, okm)
+            .expect("HKDF-Expand failed");
+        assert_eq!(okm, *expected_okm, "HKDF-Expand OKM mismatch");
+        // Also test the combined hkdf() method using test case 1 only (salt is Some).
+        if salt.is_some() {
+            let mut okm2 = [0u8; 82];
+            let okm2 = &mut okm2[..expected_okm.len()];
+            cal.hkdf(alg.clone(), *salt, ikm, info, okm2)
+                .expect("hkdf() combined call failed");
+            assert_eq!(okm2, *expected_okm, "hkdf() combined call OKM mismatch");
+        }
+    }
+}
+
+pub const AES_CCM_16_64_256: &[AeadCase] = &[
+    // From CCM Test Vector (SP 800-38C)
+    AeadCase {
+        alg_cose: 11,
+        key: &hex!("bae73483de27b581a7c13f178a6d7bda168c1b4a1cb9180512a13e3ab914eb61"),
+        nonce: &hex!("daf54faef6e4fc7867624b76f2"),
+        aad: &hex!("7022eaa52c9da821da72d2edd98f6b91dfe474999b75b34699aeb38465f70c1c"),
+        plaintext: &hex!("28ef408d57930086011b167ac04b866e5b58fe6690a0b9c3"),
+        ciphertext: &hex!("356367c6cee4453658418d9517f7c6faddcd7c65aef46013"),
+        tag: &hex!("8cf050f48c505151"),
+    },
+    AeadCase {
+        alg_cose: 11,
+        key: &hex!("bae73483de27b581a7c13f178a6d7bda168c1b4a1cb9180512a13e3ab914eb61"),
+        nonce: &hex!("daf54faef6e4fc7867624b76f2"),
+        aad: &hex!("a61b6c1f0293a7c35520abf158a995e5ae59b43ec5f38ff6fd6529970c9f83ac"),
+        plaintext: &hex!("1c5ad37d2a55afbc390b27cde0c42d6651fe191239bfaa27"),
+        ciphertext: &hex!("01d6f436b322ea0c6051bc2237786df2d76b9b1107eb73f7"),
+        tag: &hex!("6bca352f92f383e1"),
+    },
+    AeadCase {
+        alg_cose: 11,
+        key: &hex!("bae73483de27b581a7c13f178a6d7bda168c1b4a1cb9180512a13e3ab914eb61"),
+        nonce: &hex!("daf54faef6e4fc7867624b76f2"),
+        aad: &hex!("0f1c6dffeda98f7a159f9cc61820bfb29910d8eaa41b751a41f9fe5648f02fba"),
+        plaintext: &hex!("6efe6652d46a84166d30befe2fbee0795e9475b401eedd60"),
+        ciphertext: &hex!("737241194d1dc1a6346a2511f802a0edd801f7b73fba04b0"),
+        tag: &hex!("14fd7c84052208d9"),
+    },
+    AeadCase {
+        alg_cose: 11,
+        key: &hex!("bae73483de27b581a7c13f178a6d7bda168c1b4a1cb9180512a13e3ab914eb61"),
+        nonce: &hex!("daf54faef6e4fc7867624b76f2"),
+        aad: &hex!("151110a9ce7e44e5d76d9cad53c1819317527fcd169051f01c6a3efcc06ea999"),
+        plaintext: &hex!("55b791ee495299916ff3c2327b4990952bebd0a2da9acfc5"),
+        ciphertext: &hex!("483bb6a5d025dc2136a959ddacf5d001ad7e52a1e4ce1615"),
+        tag: &hex!("c3ebc7214b9eef31"),
+    },
+    AeadCase {
+        alg_cose: 11,
+        key: &hex!("bae73483de27b581a7c13f178a6d7bda168c1b4a1cb9180512a13e3ab914eb61"),
+        nonce: &hex!("daf54faef6e4fc7867624b76f2"),
+        aad: &hex!("0ba1210696d735eebc13b609d0ec33bc740805105dd82f065b82892b931f1e6d"),
+        plaintext: &hex!("794a86f5b20d344ad86fd5523d08f1864737be57731440c2"),
+        ciphertext: &hex!("64c6a1be2b7a71fa81354ebdeab4b112c1a23c544d409912"),
+        tag: &hex!("eff08182f8a00f13"),
+    },
+    AeadCase {
+        alg_cose: 11,
+        key: &hex!("bae73483de27b581a7c13f178a6d7bda168c1b4a1cb9180512a13e3ab914eb61"),
+        nonce: &hex!("daf54faef6e4fc7867624b76f2"),
+        aad: &hex!("5a3b71b0fdecce8bd759d3d72321b5c3e882c82627c14e0b59cc8c6d191f243f"),
+        plaintext: &hex!("efa6ddd6fb8e4480a0f64414694e5f9e7f2e9b97cbe9cd14"),
+        ciphertext: &hex!("f22afa9d62f90130f9acdffbbef21f0af9bb1994f5bd14c4"),
+        tag: &hex!("6894be1f8fa14538"),
+    },
 ];
 
 pub fn test_hmac_sha256<Cal: embedded_cal::HmacProvider>(cal: &mut Cal) {
@@ -191,16 +385,37 @@ impl AeadCase {
         // FIXME: try again with chunked AAD
 
         let produced_tag = cal.encrypt_in_place(&key, self.nonce, buf, self.aad);
-        assert_eq!(self.tag, produced_tag.as_ref());
-        assert_eq!(buf, self.ciphertext);
+        assert_eq!(
+            produced_tag.as_ref(),
+            self.tag,
+            "tag mismatch: expected {:02x?}, got {:02x?}",
+            self.tag,
+            produced_tag.as_ref()
+        );
+        assert_eq!(
+            buf, self.ciphertext,
+            "ciphertext mismatch: expected {:02x?}, got {:02x?}",
+            self.ciphertext, buf
+        );
+
         cal.decrypt_in_place(&key, self.nonce, buf, self.tag, self.aad)
             .unwrap();
-        assert_eq!(buf, self.plaintext);
+        assert_eq!(
+            buf, self.plaintext,
+            "decryption mismatch: expected {:02x?}, got {:02x?}",
+            self.plaintext, buf
+        );
     }
 }
 
 pub fn test_aead_aesccm_16_64_128(cal: &mut impl embedded_cal::AeadProvider) {
     for case in AES_CCM_16_64_128 {
+        case.test(cal);
+    }
+}
+
+pub fn test_aead_aesccm_16_64_256(cal: &mut impl embedded_cal::AeadProvider) {
+    for case in AES_CCM_16_64_256 {
         case.test(cal);
     }
 }

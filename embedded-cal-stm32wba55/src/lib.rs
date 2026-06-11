@@ -2,7 +2,7 @@
 
 use embedded_cal::plumbing::hash::SHA2SHORT_BLOCK_SIZE;
 use stm32_metapac::{
-    hash,
+    aes, hash,
     rcc::{self, vals::Rngsel},
     rng::{
         self,
@@ -10,6 +10,7 @@ use stm32_metapac::{
     },
 };
 mod aead;
+mod empty_impls;
 mod try_rng;
 
 const WORD_SIZE: usize = 4;
@@ -22,23 +23,30 @@ pub struct Stm32wba55Cal {
     hash: hash::Hash,
     rcc: rcc::Rcc,
     rng: rng::Rng,
+    aes: aes::Aes,
 }
 
 impl embedded_cal::Cal for Stm32wba55Cal {}
 
 impl Stm32wba55Cal {
-    pub fn new(hash: hash::Hash, rcc: rcc::Rcc, rng: rng::Rng) -> Self {
+    pub fn new(hash: hash::Hash, rcc: rcc::Rcc, rng: rng::Rng, aes: aes::Aes) -> Self {
         // Select HSI as the RNG kernel clock source (default is LSE which may not be running)
         rcc.ccipr2().modify(|w| w.set_rngsel(Rngsel::HSI));
 
-        // Enable HASH and RNG clocks
+        // Enable HASH, RNG, and AES clocks
         rcc.ahb2enr().modify(|w| {
             w.set_hashen(true);
             w.set_rngen(true);
+            w.set_aesen(true);
         });
 
-        let mut cal = Self { hash, rcc, rng };
-        cal.init_rng().expect("RNG init failed");
+        let mut cal = Self {
+            hash,
+            rcc,
+            rng,
+            aes,
+        };
+        cal.init_rng();
         cal
     }
 
@@ -47,7 +55,7 @@ impl Stm32wba55Cal {
     /// Must be called once after enabling the RNG clock, and again on seed error recovery.
     /// Uses NIST config A (certifiable). The HTCR magic number must precede any HTCR write
     /// per the RM0493 requirement.
-    fn init_rng(&mut self) -> Result<(), try_rng::RngError> {
+    fn init_rng(&mut self) {
         // Enter conditioning reset with NIST config A settings
         self.rng.cr().write(|w| {
             w.set_condrst(true);
@@ -62,7 +70,7 @@ impl Stm32wba55Cal {
         });
 
         // Wait for conditioning reset to take effect
-        wait_for(|| self.rng.cr().read().condrst())?;
+        wait_for(|| self.rng.cr().read().condrst());
 
         // Write health test config: magic number must immediately precede the actual value
         self.rng.htcr().write(|w| w.set_htcfg(Htcfg::MAGIC));
@@ -75,7 +83,7 @@ impl Stm32wba55Cal {
         });
 
         // Wait for conditioning reset to deassert (RM0493 requires waiting for both assert and deassert)
-        wait_for(|| !self.rng.cr().read().condrst())?;
+        wait_for(|| !self.rng.cr().read().condrst());
 
         // Clear any latched seed error from the reset
         self.rng.sr().modify(|w| w.set_seis(false));
@@ -85,30 +93,31 @@ impl Stm32wba55Cal {
         wait_for(|| {
             let sr = self.rng.sr().read();
             sr.drdy() || sr.seis()
-        })?;
+        });
         if self.rng.sr().read().seis() {
-            return Err(try_rng::RngError::HardwareFailure);
+            panic!("RNG hardware error");
         }
         let _ = self.rng.dr().read();
-
-        Ok(())
     }
 }
 
-fn wait_for(mut condition: impl FnMut() -> bool) -> Result<(), try_rng::RngError> {
+fn wait_for(mut condition: impl FnMut() -> bool) {
     for _ in 0..1000 {
         if condition() {
-            return Ok(());
+            return;
         }
         core::hint::spin_loop();
     }
-    Err(try_rng::RngError::HardwareFailure)
+    panic!("RNG hardware failure");
 }
 
 impl Drop for Stm32wba55Cal {
     fn drop(&mut self) {
-        // Disable HASH clock
-        self.rcc.ahb2enr().modify(|w| w.set_hashen(false));
+        self.rcc.ahb2enr().modify(|w| {
+            w.set_hashen(false);
+            w.set_rngen(false);
+            w.set_aesen(false);
+        });
         self.rng.cr().modify(|w| w.set_rngen(false));
     }
 }
@@ -159,6 +168,10 @@ pub enum HmacAlgorithm {
 }
 
 impl embedded_cal::HmacAlgorithm for HmacAlgorithm {
+    const MAX_LEN: usize = 32;
+
+    type MaxLenBuf = [u8; 32];
+
     fn len(&self) -> usize {
         match self {
             HmacAlgorithm::HmacSha256 => 32,

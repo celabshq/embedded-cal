@@ -87,21 +87,69 @@ impl<const PLUMBING: bool> AeadProvider for EmptyCal<PLUMBING> {
     }
 }
 
-impl<const PLUMBING: bool> rand_core::TryCryptoRng for EmptyCal<PLUMBING> {}
+impl<const PLUMBING: bool> DhProvider for EmptyCal<PLUMBING> {
+    type DhAlgorithm = NoAlgorithms;
+    type VisibleSecretKey = NoAlgorithms;
+    type SecretKey = NoAlgorithms;
+    type PublicKey = NoAlgorithms;
+    type SharedSecret = NoAlgorithms;
 
-impl<const PLUMBING: bool> rand_core::TryRng for EmptyCal<PLUMBING> {
-    type Error = NoRng;
-
-    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
-        Err(NoRng)
+    fn generate_visible(&mut self, alg: Self::DhAlgorithm) -> Self::VisibleSecretKey {
+        match alg {}
     }
 
-    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
-        Err(NoRng)
+    fn shared_secret(
+        &mut self,
+        private: &Self::SecretKey,
+        _public: &Self::PublicKey,
+    ) -> Result<Self::SharedSecret, IncompatibleKeys> {
+        match *private {}
     }
 
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), Self::Error> {
-        Err(NoRng)
+    fn public_key(&mut self, private: &Self::SecretKey) -> Self::PublicKey {
+        match *private {}
+    }
+
+    #[allow(unreachable_code, reason = "needed to satisfy RPIT")]
+    fn raw_secret_bytes<'s>(
+        &mut self,
+        secret: &'s Self::SharedSecret,
+    ) -> impl AsRef<[u8]> + use<'s, PLUMBING> {
+        match *secret {};
+        &[]
+    }
+
+    #[allow(unreachable_code, reason = "needed to satisfy RPIT")]
+    fn export_secretkey_bytes<'s>(
+        &mut self,
+        secretkey: &'s Self::VisibleSecretKey,
+    ) -> impl AsRef<[u8]> + use<'s, PLUMBING> {
+        match *secretkey {};
+        &[]
+    }
+
+    fn import_secretkey_bytes(
+        &mut self,
+        alg: Self::DhAlgorithm,
+        _secret: &[u8],
+    ) -> Result<Self::VisibleSecretKey, dh::ImportError> {
+        match alg {}
+    }
+
+    #[allow(unreachable_code, reason = "needed to satisfy RPIT")]
+    fn export_publickey_bytes<'p>(
+        &mut self,
+        public: &'p Self::PublicKey,
+    ) -> impl AsRef<[u8]> + use<'p, PLUMBING> {
+        match *public {};
+        &[]
+    }
+    fn import_publickey_bytes(
+        &mut self,
+        alg: Self::DhAlgorithm,
+        _data: &[u8],
+    ) -> Result<Self::PublicKey, dh::ImportError> {
+        match alg {}
     }
 }
 
@@ -159,6 +207,10 @@ impl HashAlgorithm for NoAlgorithms {
 }
 
 impl HmacAlgorithm for NoAlgorithms {
+    const MAX_LEN: usize = 0;
+
+    type MaxLenBuf = [u8; 0];
+
     fn len(&self) -> usize {
         match *self {}
     }
@@ -170,14 +222,8 @@ impl AsRef<[u8]> for NoAlgorithms {
     }
 }
 
-/// Error type returned by [`EmptyCal`] when trying to obtain random numbers.
-#[derive(Debug)]
-pub struct NoRng;
-
-impl core::fmt::Display for NoRng {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str("no RNG available in empty Cal implementation")
+impl DhAlgorithm for NoAlgorithms {
+    fn output_length(&self) -> usize {
+        match *self {}
     }
 }
-
-impl core::error::Error for NoRng {}

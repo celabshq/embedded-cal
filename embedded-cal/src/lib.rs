@@ -3,18 +3,25 @@
 pub mod empty;
 
 mod aead;
+mod dh;
 mod hash;
+mod hkdf;
 mod hmac;
 mod rng;
 // FIXME: Once we start API stability, this should be a dedicated crate.
 pub mod plumbing;
 
 pub use aead::{
-    AadGenerator, AeadAlgorithm, AeadProvider, DecryptionFailed,
+    AadGenerator, AeadAlgorithm, AeadProvider, DecryptionFailed, build_b0,
     test_aead_algorithm_aesccm_16_64_128,
 };
+pub use dh::{
+    DhAlgorithm, DhProvider, ImportError, IncompatibleKeys, test_dh_algorithm_ecdh_p256,
+    test_dh_selftest,
+};
 pub use hash::{HashAlgorithm, HashProvider, test_hash_algorithm_sha256};
+pub use hkdf::{HkdfError, HkdfProvider};
 pub use hmac::{HmacAlgorithm, HmacProvider, test_hmac_algorithm_hmacsha256};
 pub use rng::test_tryrng;
 
-pub trait Cal: HashProvider + HmacProvider + AeadProvider {}
+pub trait Cal: HashProvider + HmacProvider + AeadProvider + DhProvider {}
