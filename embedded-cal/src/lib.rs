@@ -1,6 +1,7 @@
 #![no_std]
 
 pub mod empty;
+pub mod util;
 
 mod aead;
 mod dh;

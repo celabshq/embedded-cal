@@ -4,21 +4,30 @@ mod hash;
 mod rng;
 
 use digest::Digest;
+use embedded_cal::{accessor::*, empty};
 
-pub struct RustcryptoCal {
+pub type RustcryptoCal = RustcryptoCalExtender<empty::EmptyCal<false>>;
+
+pub struct RustcryptoCalExtender<Base> {
     #[cfg(not(feature = "alloc"))]
     aead_buffer: [u8; 1024],
     _private: (),
-    empty: embedded_cal::empty::EmptyCal<false>,
+    base: Base,
 }
 
 impl RustcryptoCal {
     pub const fn new() -> Self {
+        Self::new_extending(empty::EmptyCal)
+    }
+}
+
+impl<Base> RustcryptoCalExtender<Base> {
+    pub const fn new_extending(base: Base) -> Self {
         Self {
             #[cfg(not(feature = "alloc"))]
             aead_buffer: [0; _],
             _private: (),
-            empty: embedded_cal::empty::EmptyCal,
+            base,
         }
     }
 
@@ -46,11 +55,11 @@ impl Default for RustcryptoCal {
     }
 }
 
-impl embedded_cal::Cal for RustcryptoCal {
+impl<Base: embedded_cal::Cal> embedded_cal::Cal for RustcryptoCalExtender<Base> {
     type DhProvider = Self;
     type AeadProvider = Self;
     type HashProvider = Self;
-    type HmacProvider = embedded_cal::empty::EmptyCal<false>;
+    type HmacProvider = HmacProviderOf<Base>;
 
     fn dh(&mut self) -> &mut Self::DhProvider {
         self
@@ -62,7 +71,7 @@ impl embedded_cal::Cal for RustcryptoCal {
         self
     }
     fn hmac(&mut self) -> &mut Self::HmacProvider {
-        &mut self.empty
+        self.base.hmac()
     }
 }
 
@@ -74,9 +83,7 @@ mod tests {
     fn test_hash_algorithm_sha256() {
         let mut cal = RustcryptoCal::new();
 
-        embedded_cal::test_hash_algorithm_sha256::<
-            <RustcryptoCal as embedded_cal::HashProvider>::Algorithm,
-        >();
+        embedded_cal::test_hash_algorithm_sha256::<HashAlgorithmOf<RustcryptoCal>>();
         testvectors::test_hash_algorithm_sha256(&mut cal);
     }
 
