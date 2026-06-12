@@ -34,7 +34,7 @@ mod tests {
     #[test]
     fn test_hash_algorithm_sha256(state: &mut super::TestState) {
         embedded_cal::test_hash_algorithm_sha256::<
-            <Nrf54l15Cal as embedded_cal::HashProvider>::Algorithm,
+            <embedded_cal_software_demo::Extender<ImplementSha256Short> as embedded_cal::HashProvider>::Algorithm,
         >();
         testvectors::test_hash_algorithm_sha256(&mut state.cal);
     }
