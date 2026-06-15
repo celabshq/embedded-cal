@@ -43,6 +43,7 @@ fn pke_ram_word(addr: u32) -> Reg<u32, RW> {
 }
 
 fn write_pke_le(addr: u32, data: &[u8]) {
+    debug_assert!(data.len() % 4 == 0, "function expects word sized data");
     for (i, chunk) in data.chunks_exact(4).enumerate() {
         let v = u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
         pke_ram_word(addr + i as u32 * 4).write_value(v);
