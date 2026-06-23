@@ -11,9 +11,13 @@ keywords.workspace = true
 categories.workspace = true
 version.workspace = true
 
+[features]
+check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-iot-sha3/check-secret-independence"]
+
 [dependencies]
 embedded-cal.path = "../embedded-cal"
 libcrux-iot-aes = { git = "https://github.com/celabshq/libcrux-iot", branch = "embedded-cal" }
+libcrux-iot-sha3 = { git = "https://github.com/celabshq/libcrux-iot.git", branch = "embedded-cal" }
 libcrux-secrets = { version = "0.0.5" }
 libcrux-sha2 = "0.0.7"
 libcrux-traits = { version = "0.0.7", features = ["error-in-core"] }
