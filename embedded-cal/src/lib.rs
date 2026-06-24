@@ -4,6 +4,7 @@
 
 pub mod empty;
 pub mod p256;
+pub mod util;
 
 mod aead;
 mod dh;
