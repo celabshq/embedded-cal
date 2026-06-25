@@ -434,6 +434,7 @@ version = "0.1.0"
 dependencies = [
  "embedded-cal",
  "libcrux-iot-aes",
+ "libcrux-secrets",
  "libcrux-sha2",
  "libcrux-traits",
  "rand_core 0.10.1",

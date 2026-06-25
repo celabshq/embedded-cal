@@ -2,6 +2,11 @@
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
 use libcrux_iot_aes::AeadConsts as _;
+// For compatibility with libcrux-traits when the `check-secret-independence` of
+// libcrux-secrets is enabled, we need to perform classify operations at the
+// API boundaries. If the cargo feature libcrux-secrets/check-secret-independence
+// is not enabled, these are no-ops.
+use libcrux_secrets::{Classify, ClassifyRef, ClassifyRefMut, DeclassifyRef, U8};
 use libcrux_traits::aead::typed_owned;
 
 use embedded_cal::AeadProvider;
@@ -41,11 +46,13 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
             AeadAlgorithm::AesGcm128 => Key::AesGcm128(
                 <[u8; _]>::try_from(key)
                     .expect("key length mismatch")
+                    .classify()
                     .into(),
             ),
             AeadAlgorithm::AesGcm256 => Key::AesGcm256(
                 <[u8; _]>::try_from(key)
                     .expect("key length mismatch")
+                    .classify()
                     .into(),
             ),
         }
@@ -78,19 +85,19 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
         ) -> typed_owned::Tag<Alg>
         where
             Alg: typed_owned::Aead,
-            typed_owned::Tag<Alg>: From<[u8; T]>,
-            typed_owned::Nonce<Alg>: From<[u8; N]>,
+            typed_owned::Tag<Alg>: From<[U8; T]>,
+            typed_owned::Nonce<Alg>: From<[U8; N]>,
         {
-            let mut tag: typed_owned::Tag<Alg> = [0u8; _].into();
+            let mut tag: typed_owned::Tag<Alg> = [U8(0u8); _].into();
             let nonce: typed_owned::Nonce<Alg> =
-                (<[u8; N]>::try_from(nonce).expect("nonce length mismatch")).into();
+                (<[U8; N]>::try_from(nonce.classify_ref()).expect("nonce length mismatch")).into();
             Alg::encrypt(
                 ciphertext.as_mut_slice(),
                 &mut tag,
                 key,
                 &nonce,
                 aad.as_slice(),
-                message,
+                message.classify_ref(),
             )
             .expect("slice lenghts match");
             tag
@@ -146,15 +153,15 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
         ) -> Result<(), embedded_cal::DecryptionFailed>
         where
             Alg: typed_owned::Aead,
-            typed_owned::Tag<Alg>: From<[u8; T]>,
-            typed_owned::Nonce<Alg>: From<[u8; N]>,
+            typed_owned::Tag<Alg>: From<[U8; T]>,
+            typed_owned::Nonce<Alg>: From<[U8; N]>,
         {
             let tag: typed_owned::Tag<Alg> =
-                (<[u8; T]>::try_from(tag).expect("tag length mismatch")).into();
+                (<[U8; T]>::try_from(tag.classify_ref()).expect("tag length mismatch")).into();
             let nonce: typed_owned::Nonce<Alg> =
-                (<[u8; N]>::try_from(nonce).expect("nonce length mismatch")).into();
+                (<[U8; N]>::try_from(nonce.classify_ref()).expect("nonce length mismatch")).into();
             Alg::decrypt(
-                ciphertext.as_mut_slice(),
+                ciphertext.as_mut_slice().classify_ref_mut(),
                 key,
                 &nonce,
                 aad.as_slice(),
@@ -253,8 +260,8 @@ impl<EC: ExtenderConfig> AsRef<[u8]> for Tag<EC> {
     fn as_ref(&self) -> &[u8] {
         match self {
             Tag::Direct(tag) => tag.as_ref(),
-            Tag::AesGcm128(tag) => tag.as_ref(),
-            Tag::AesGcm256(tag) => tag.as_ref(),
+            Tag::AesGcm128(tag) => tag.as_ref().declassify_ref(),
+            Tag::AesGcm256(tag) => tag.as_ref().declassify_ref(),
         }
     }
 }
