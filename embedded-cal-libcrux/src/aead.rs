@@ -65,7 +65,7 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
         message: &mut [u8],
         aad: impl embedded_cal::AadGenerator,
     ) -> Self::Tag {
-        // Handle the simple case quicly; everything else needs the allocations
+        // Handle the simple case quickly; everything else needs the allocations
         if let Key::Direct(k) = key {
             return Tag::Direct(self.0.aead().encrypt_in_place(k, nonce, message, aad));
         };
@@ -99,7 +99,7 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
                 aad.as_slice(),
                 message.classify_ref(),
             )
-            .expect("slice lenghts match");
+            .expect("slice lengths match");
             tag
         }
 
@@ -132,7 +132,7 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
         tag: &[u8],
         aad: impl embedded_cal::AadGenerator,
     ) -> Result<(), embedded_cal::DecryptionFailed> {
-        // Handle the simple case quicly; everything else needs the allocations
+        // Handle the simple case quickly; everything else needs the allocations
         if let Key::Direct(k) = key {
             return self.0.aead().decrypt_in_place(k, nonce, message, tag, aad);
         };
