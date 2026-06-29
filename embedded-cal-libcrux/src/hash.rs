@@ -73,6 +73,8 @@ impl<EC: ExtenderConfig> HashProvider for Extender<EC> {
         match instance {
             HashState::Direct(i) => self.0.hash().update(i, data),
             HashState::Sha256(s) => s.0.update(data),
+            // classify the data for compatibility with libcrux_iot_sha3 when the check-secret-independence
+            // feature is activated. No-op if the feature is disabled.
             HashState::Sha3_224(s) => s.0.update(data.classify_ref()),
             HashState::Sha3_256(s) => s.0.update(data.classify_ref()),
             HashState::Sha3_384(s) => s.0.update(data.classify_ref()),
@@ -88,6 +90,7 @@ impl<EC: ExtenderConfig> HashProvider for Extender<EC> {
                 s.0.finish(&mut output);
                 HashResult::Sha256(output)
             }
+            // The embedded-cal API doesn't use libcrux-secrets, so we declassify the returned digest
             HashState::Sha3_224(s) => HashResult::Sha3_224(s.0.finish().declassify()),
             HashState::Sha3_256(s) => HashResult::Sha3_256(s.0.finish().declassify()),
             HashState::Sha3_384(s) => HashResult::Sha3_384(s.0.finish().declassify()),
