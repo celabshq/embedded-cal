@@ -214,6 +214,15 @@ impl<EC: ExtenderConfig> embedded_cal::AeadAlgorithm for AeadAlgorithm<EC> {
             AeadAlgorithm::AesGcm256 => libcrux_aesgcm::AesGcm256::NONCE_LEN,
         }
     }
+
+    fn from_cose_number(number: impl Into<i128>) -> Option<Self> {
+        let number = number.into();
+        match number {
+            1 => Some(AeadAlgorithm::AesGcm128),
+            3 => Some(AeadAlgorithm::AesGcm256),
+            _ => AeadAlgorithmOf::<EC::Base>::from_cose_number(number).map(AeadAlgorithm::Direct),
+        }
+    }
 }
 
 impl<EC: ExtenderConfig> Clone for AeadAlgorithm<EC> {
