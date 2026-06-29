@@ -164,7 +164,7 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
             .map_err(|_| embedded_cal::DecryptionFailed)
         }
 
-        match key {
+        let res = match key {
             Key::Direct(_) => unreachable!(),
             Key::AesGcm128(key) => decrypt::<libcrux_aesgcm::AesGcm128, _, _>(
                 &mut ciphertext,
@@ -182,7 +182,11 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
                 message,
                 tag,
             ),
-        }
+        };
+        if let Ok(()) = res {
+            message.copy_from_slice(&ciphertext);
+        };
+        res
     }
 }
 
@@ -256,5 +260,35 @@ impl<EC: ExtenderConfig> AsRef<[u8]> for Tag<EC> {
             Tag::AesGcm128(tag) => tag.as_ref(),
             Tag::AesGcm256(tag) => tag.as_ref(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use embedded_cal::{AeadProvider, Cal};
+    use libcrux_aesgcm::NONCE_LEN;
+
+    use crate::{Extender, ExtenderConfig, aead::Key};
+
+    struct TestConfig;
+
+    impl ExtenderConfig for TestConfig {
+        type Base = embedded_cal::empty::EmptyCal<true>;
+    }
+
+    #[test]
+    fn test_aes_gcm_128_encrypt_decrypt() {
+        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+
+        let key = Key::AesGcm128(libcrux_aesgcm::AesGcm128Key::from([0; 16]));
+        let nonce = &[0; NONCE_LEN];
+        let mut message = [0; 20];
+        let aad = &[0; 20][..];
+
+        let tag = cal.aead().encrypt_in_place(&key, nonce, &mut message, aad);
+        cal.aead()
+            .decrypt_in_place(&key, nonce, &mut message, tag.as_ref(), aad)
+            .unwrap();
+        assert_eq!([0; 20], message);
     }
 }
