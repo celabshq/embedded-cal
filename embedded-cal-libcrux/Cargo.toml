@@ -14,6 +14,11 @@ version.workspace = true
 license = "AGPL-3.0-only"
 
 [features]
+# The check-secret-independence feature can be used as a lightweight check that secrets are not used
+# in a way that depends on their values. This is achieved with the https://docs.rs/libcrux-secrets crate
+# which provides type-aliases that either point to the normal rust integers, or to specially restricted
+# new-types if the feature is enabled. This feature should only be activated locally or in CI to check
+# for secret independence, and not when depending on the embedded-cal-libcrux crate.
 check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-iot-sha3/check-secret-independence"]
 
 [dependencies]
