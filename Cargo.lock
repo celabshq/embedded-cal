@@ -815,7 +815,7 @@ dependencies = [
 [[package]]
 name = "libcrux-iot-aes"
 version = "0.0.8"
-source = "git+https://github.com/celabshq/libcrux-iot?rev=d62904ee7c023b9758eeb0a736af5afc1c5cd16d#d62904ee7c023b9758eeb0a736af5afc1c5cd16d"
+source = "git+https://github.com/celabshq/libcrux-iot?rev=329603cf7474c2ba535ccd0761a05b989a0cfe59#329603cf7474c2ba535ccd0761a05b989a0cfe59"
 dependencies = [
  "libcrux-secrets",
  "libcrux-traits",
