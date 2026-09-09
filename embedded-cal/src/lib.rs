@@ -21,7 +21,8 @@ pub use aead::{
     test_aead_algorithm_aesccm_16_64_128,
 };
 pub use dh::{
-    DhAlgorithm, DhProvider, IncompatibleKeys, test_dh_algorithm_ecdh_p256, test_dh_selftest,
+    DhAlgorithm, DhProvider, EcWeierstrassFullPoint, IncompatibleKeys,
+    test_dh_algorithm_ecdh_p256, test_dh_selftest,
 };
 pub use error::ImportError;
 pub use hash::{HashAlgorithm, HashProvider, test_hash_algorithm_sha256};

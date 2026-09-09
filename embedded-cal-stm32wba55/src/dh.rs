@@ -75,7 +75,10 @@ pub struct PublicKey {
 }
 
 #[derive(Zeroize, ZeroizeOnDrop)]
-pub struct SharedSecret([u8; 32]);
+pub struct SharedSecret {
+    x: [u8; 32],
+    y: [u8; 32],
+}
 
 impl super::Stm32wba55Cal {
     fn pka_zero_ram(&mut self) {
@@ -224,13 +227,16 @@ impl embedded_cal::DhProvider for super::Stm32wba55Cal {
             return Err(embedded_cal::IncompatibleKeys);
         }
         let mut scalar_words = bytes_to_words(&private.scalar);
-        let (result_x, _) = self.pka_ecc_mult(
+        let (result_x, result_y) = self.pka_ecc_mult(
             &scalar_words,
             &bytes_to_words(&public.x),
             &bytes_to_words(&public.y),
         );
         scalar_words.zeroize();
-        Ok(SharedSecret(words_to_bytes(&result_x)))
+        Ok(SharedSecret {
+            x: words_to_bytes(&result_x),
+            y: words_to_bytes(&result_y),
+        })
     }
 
     fn public_key(&mut self, private: &Self::SecretKey) -> Self::PublicKey {
@@ -248,6 +254,16 @@ impl embedded_cal::DhProvider for super::Stm32wba55Cal {
         &mut self,
         secret: &'s Self::SharedSecret,
     ) -> impl AsRef<[u8]> + use<'s> {
-        &secret.0
+        &secret.x
+    }
+}
+
+impl embedded_cal::EcWeierstrassFullPoint for super::Stm32wba55Cal {
+    fn public_key_xy(&mut self, public: &Self::PublicKey) -> ([u8; 32], [u8; 32]) {
+        (public.x, public.y)
+    }
+
+    fn shared_secret_xy(&mut self, secret: &Self::SharedSecret) -> ([u8; 32], [u8; 32]) {
+        (secret.x, secret.y)
     }
 }

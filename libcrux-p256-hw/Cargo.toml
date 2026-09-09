@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MIT OR Apache-2.0
+# SPDX-FileCopyrightText: Inria-AIO, CryptoEng, and Christian Amsüss
+
+[package]
+name = "libcrux-p256-hw"
+edition.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+version.workspace = true
+
+[dependencies]
+embedded-cal.path = "../embedded-cal"
+embedded-cal-nrf54l15 = { path = "../embedded-cal-nrf54l15", optional = true }
+embedded-cal-stm32wba55 = { path = "../embedded-cal-stm32wba55", optional = true }
+libcrux-p256 = "0.0.8"
+libcrux-secrets = "0.0.6"
+libcrux-traits = { version = "0.0.8", features = ["error-in-core"] }
+critical-section = "1"
+
+[dev-dependencies]
+testvectors.path = "../testvectors"
+
+[features]
+nrf54l15 = ["dep:embedded-cal-nrf54l15"]
+stm32wba55 = ["dep:embedded-cal-stm32wba55"]

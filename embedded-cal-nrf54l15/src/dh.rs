@@ -192,6 +192,8 @@ pub enum PublicKey {
 pub struct SharedSecret {
     bytes: [u8; <super::Nrf54l15Cal as Ec>::MAX_SCALAR_LENGTH],
     len: usize,
+    // Full y-coordinate of the shared secret point; used only for P-256 (0 otherwise).
+    y: [u8; 32],
 }
 
 impl SharedSecret {
@@ -210,6 +212,8 @@ impl SharedSecret {
         SharedSecret {
             bytes,
             len: C::SCALAR_SIZE,
+            // Only P-256 shared secrets retain the true y (see `shared_secret()`'s P-256 arm).
+            y: [0u8; 32],
         }
     }
 }
@@ -504,7 +508,18 @@ impl embedded_cal::DhProvider for super::Nrf54l15Cal {
         match (private, public) {
             (SecretKey::EcdhP256(private), PublicKey::EcdhP256(public)) => {
                 let result = self.p256().multiply_scalar_point(private, public);
-                Ok(SharedSecret::from_x_coordinate(self.p256(), &result))
+                // Retain the true y (unlike the other curves): `EcWeierstrassFullPoint` needs it.
+                let x = self.p256().x_coord(&result);
+                let y = self.p256().y_coord(&result);
+                let x: [u8; 32] = (&x).into();
+                let y: [u8; 32] = (&y).into();
+                let mut bytes = [0u8; <super::Nrf54l15Cal as Ec>::MAX_SCALAR_LENGTH];
+                bytes[..32].copy_from_slice(&x);
+                Ok(SharedSecret {
+                    bytes,
+                    len: 32,
+                    y,
+                })
             }
             (SecretKey::X25519(k), PublicKey::X25519(public)) => {
                 // Not clamping of k: Was done at generation / loading time.
@@ -513,7 +528,6 @@ impl embedded_cal::DhProvider for super::Nrf54l15Cal {
                 Ok(SharedSecret::from_x_coordinate(self.x25519(), &result))
             }
             (SecretKey::X448(k), PublicKey::X448(public)) => {
-                // Not clamping of k: Was done at generation / loading time.
                 let result = self.x448().multiply_scalar_point(k, public);
                 Ok(SharedSecret::from_x_coordinate(self.x448(), &result))
             }
@@ -556,5 +570,23 @@ impl embedded_cal::DhProvider for super::Nrf54l15Cal {
         secret: &'s Self::SharedSecret,
     ) -> impl AsRef<[u8]> + use<'s> {
         secret.as_ref()
+    }
+}
+
+impl embedded_cal::EcWeierstrassFullPoint for super::Nrf54l15Cal {
+    fn public_key_xy(&mut self, public: &Self::PublicKey) -> ([u8; 32], [u8; 32]) {
+        let PublicKey::EcdhP256(point) = public else {
+            unreachable!("EcWeierstrassFullPoint is only implemented for P-256 keys")
+        };
+        let x = self.p256().x_coord(point);
+        let y = self.p256().y_coord(point);
+        ((&x).into(), (&y).into())
+    }
+
+    fn shared_secret_xy(&mut self, secret: &Self::SharedSecret) -> ([u8; 32], [u8; 32]) {
+        let x = secret.bytes[..32]
+            .try_into()
+            .expect("slice is always 32 bytes");
+        (x, secret.y)
     }
 }

@@ -121,6 +121,23 @@ pub trait DhProvider {
     ) -> impl AsRef<[u8]> + use<'s, Self>;
 }
 
+/// Extension of [`DhProvider`] for short-Weierstrass curves (e.g. P-256) whose backend can expose
+/// the full affine `(x, y)` coordinates of a public key or shared secret, in addition to
+/// [`DhProvider`]'s compact/x-only wire format.
+///
+/// This is additive and non-breaking: curves without a native `y` (e.g. X25519, X448) simply do
+/// not implement it. It exists because some consumers (e.g. `libcrux-p256`'s `EcdhArrayref`) work
+/// over the full uncompressed point representation rather than the compact one.
+pub trait EcWeierstrassFullPoint: DhProvider {
+    /// The affine `(x, y)` coordinates of a public key, each big-endian and zero-padded to the
+    /// algorithm's field size.
+    fn public_key_xy(&mut self, public: &Self::PublicKey) -> ([u8; 32], [u8; 32]);
+
+    /// The affine `(x, y)` coordinates of a shared secret's point, each big-endian and zero-padded
+    /// to the algorithm's field size.
+    fn shared_secret_xy(&mut self, secret: &Self::SharedSecret) -> ([u8; 32], [u8; 32]);
+}
+
 /// Error indicating that the public and the private key are incompatible.
 #[derive(Debug)]
 pub struct IncompatibleKeys;
