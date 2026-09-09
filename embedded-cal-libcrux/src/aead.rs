@@ -78,26 +78,18 @@ impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
     type Tag = Tag<EC>;
 
     fn load_from_keydata(&mut self, alg: Self::Algorithm, key: &[u8]) -> Self::Key {
+        fn convert<const N: usize>(key: &[u8]) -> [u8; N] {
+            <[u8; N]>::try_from(key).expect("key length mismatch")
+        }
+
         match alg {
             AeadAlgorithm::Direct(alg) => Key::Direct(self.0.aead().load_from_keydata(alg, key)),
-            AeadAlgorithm::AesGcm128 => {
-                Key::AesGcm128(<[u8; _]>::try_from(key).expect("key length mismatch"))
-            }
-            AeadAlgorithm::AesGcm256 => {
-                Key::AesGcm256(<[u8; _]>::try_from(key).expect("key length mismatch"))
-            }
-            AeadAlgorithm::AesCcm128 => {
-                Key::AesCcm128(<[u8; _]>::try_from(key).expect("key length mismatch"))
-            }
-            AeadAlgorithm::AesCcm128Short => {
-                Key::AesCcm128Short(<[u8; _]>::try_from(key).expect("key length mismatch"))
-            }
-            AeadAlgorithm::AesCcm256 => {
-                Key::AesCcm256(<[u8; _]>::try_from(key).expect("key length mismatch"))
-            }
-            AeadAlgorithm::AesCcm256Short => {
-                Key::AesCcm256Short(<[u8; _]>::try_from(key).expect("key length mismatch"))
-            }
+            AeadAlgorithm::AesGcm128 => Key::AesGcm128(convert(key)),
+            AeadAlgorithm::AesGcm256 => Key::AesGcm256(convert(key)),
+            AeadAlgorithm::AesCcm128 => Key::AesCcm128(convert(key)),
+            AeadAlgorithm::AesCcm128Short => Key::AesCcm128Short(convert(key)),
+            AeadAlgorithm::AesCcm256 => Key::AesCcm256(convert(key)),
+            AeadAlgorithm::AesCcm256Short => Key::AesCcm256Short(convert(key)),
         }
     }
 
