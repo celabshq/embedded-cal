@@ -4,6 +4,8 @@
 use embedded_cal::HashAlgorithm;
 use hexlit::hex;
 
+use crate::test_hash_algorithm;
+
 pub const SHA3_224_HASHES: &[(&[u8], [u8; 28])] = &[
     (
         b"",
@@ -212,51 +214,22 @@ pub const SHA3_512_HASHES: &[(&[u8], [u8; 64])] = &[
     ),
 ];
 
-fn test_hash_algorithm_sha3<Cal: embedded_cal::HashProvider, const DIGEST_SIZE: usize>(
-    sha3: &mut Cal,
-    hash_algorithm: Cal::Algorithm,
-    test_vectors: &[(&[u8], [u8; DIGEST_SIZE])],
-) {
-    for (tv_data, tv_result) in test_vectors {
-        assert_eq!(
-            sha3.hash(hash_algorithm.clone(), tv_data).as_ref(),
-            tv_result,
-            "Hash values mismatch"
-        );
-
-        let mut hash = sha3.init(hash_algorithm.clone());
-        let mid = tv_data.len() / 2;
-        let postmid = mid + 1;
-        if tv_data.len() < postmid {
-            continue;
-        }
-        sha3.update(&mut hash, &tv_data[..mid]);
-        sha3.update(&mut hash, &tv_data[mid..postmid]);
-        sha3.update(&mut hash, &tv_data[postmid..]);
-        assert_eq!(
-            &sha3.finalize(hash).as_ref(),
-            tv_result,
-            "Hash values mismatch when input is fed in chunks"
-        );
-    }
-}
-
 pub fn test_hash_algorithm_sha3_224<Cal: embedded_cal::HashProvider>(sha3: &mut Cal) {
     let hash_algorithm = Cal::Algorithm::from_ni_id(9).unwrap();
-    test_hash_algorithm_sha3(sha3, hash_algorithm, SHA3_224_HASHES);
+    test_hash_algorithm(sha3, hash_algorithm, SHA3_224_HASHES);
 }
 
 pub fn test_hash_algorithm_sha3_256<Cal: embedded_cal::HashProvider>(sha3: &mut Cal) {
     let hash_algorithm = Cal::Algorithm::from_ni_id(10).unwrap();
-    test_hash_algorithm_sha3(sha3, hash_algorithm, SHA3_256_HASHES);
+    test_hash_algorithm(sha3, hash_algorithm, SHA3_256_HASHES);
 }
 
 pub fn test_hash_algorithm_sha3_384<Cal: embedded_cal::HashProvider>(sha3: &mut Cal) {
     let hash_algorithm = Cal::Algorithm::from_ni_id(11).unwrap();
-    test_hash_algorithm_sha3(sha3, hash_algorithm, SHA3_384_HASHES);
+    test_hash_algorithm(sha3, hash_algorithm, SHA3_384_HASHES);
 }
 
 pub fn test_hash_algorithm_sha3_512<Cal: embedded_cal::HashProvider>(sha3: &mut Cal) {
     let hash_algorithm = Cal::Algorithm::from_ni_id(12).unwrap();
-    test_hash_algorithm_sha3(sha3, hash_algorithm, SHA3_512_HASHES);
+    test_hash_algorithm(sha3, hash_algorithm, SHA3_512_HASHES);
 }
