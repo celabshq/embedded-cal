@@ -11,8 +11,10 @@
 //! independent on the source code level.
 //!
 //! <div class="warning">
+//!
 //! The `check-secret-independence` feature is not intended to be enabled unconditionally.
-//! You should only enable it locally/in CI 
+//! You should only enable it locally/in CI.
+//!
 //! </div>
 //!
 //! [ls]: https://docs.rs/libcrux-secrets/latest/libcrux_secrets/
