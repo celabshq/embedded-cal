@@ -173,7 +173,10 @@ impl<EC: ExtenderConfig> embedded_cal::HashAlgorithm for HashAlgorithm<EC> {
 
         match number {
             -16 => Some(HashAlgorithm::Sha256),
-            _ => HashAlgorithmOf::<EC::Base>::from_cose_number(number).map(HashAlgorithm::Direct),
+            // There are no COSE numbers for SHA-3, so we always delegate to the base Hash in the default case
+            number => {
+                HashAlgorithmOf::<EC::Base>::from_cose_number(number).map(HashAlgorithm::Direct)
+            }
         }
     }
 
@@ -185,7 +188,7 @@ impl<EC: ExtenderConfig> embedded_cal::HashAlgorithm for HashAlgorithm<EC> {
             10 => Some(HashAlgorithm::Sha3_256),
             11 => Some(HashAlgorithm::Sha3_384),
             12 => Some(HashAlgorithm::Sha3_512),
-            _ => None,
+            number => HashAlgorithmOf::<EC::Base>::from_ni_id(number).map(HashAlgorithm::Direct),
         }
     }
 
@@ -197,7 +200,7 @@ impl<EC: ExtenderConfig> embedded_cal::HashAlgorithm for HashAlgorithm<EC> {
             "sha3-256" => Some(HashAlgorithm::Sha3_256),
             "sha3-384" => Some(HashAlgorithm::Sha3_384),
             "sha3-512" => Some(HashAlgorithm::Sha3_512),
-            _ => None,
+            name => HashAlgorithmOf::<EC::Base>::from_ni_name(name).map(HashAlgorithm::Direct),
         }
     }
 }
