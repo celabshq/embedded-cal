@@ -5,7 +5,7 @@ use embedded_cal::HashProvider;
 use libcrux_iot_sha3::{
     SHA3_224_DIGEST_SIZE, SHA3_256_DIGEST_SIZE, SHA3_384_DIGEST_SIZE, SHA3_512_DIGEST_SIZE,
 };
-use libcrux_secrets::{ClassifyRef, Declassify};
+use libcrux_secrets::{ClassifyRef, DeclassifyRef, U8};
 
 use super::*;
 
@@ -90,11 +90,10 @@ impl<EC: ExtenderConfig> HashProvider for Extender<EC> {
                 s.0.finish(&mut output);
                 HashResult::Sha256(output)
             }
-            // The embedded-cal API doesn't use libcrux-secrets, so we declassify the returned digest
-            HashState::Sha3_224(s) => HashResult::Sha3_224(s.0.finish().declassify()),
-            HashState::Sha3_256(s) => HashResult::Sha3_256(s.0.finish().declassify()),
-            HashState::Sha3_384(s) => HashResult::Sha3_384(s.0.finish().declassify()),
-            HashState::Sha3_512(s) => HashResult::Sha3_512(s.0.finish().declassify()),
+            HashState::Sha3_224(s) => HashResult::Sha3_224(s.0.finish()),
+            HashState::Sha3_256(s) => HashResult::Sha3_256(s.0.finish()),
+            HashState::Sha3_384(s) => HashResult::Sha3_384(s.0.finish()),
+            HashState::Sha3_512(s) => HashResult::Sha3_512(s.0.finish()),
         }
     }
 }
@@ -203,13 +202,24 @@ impl<EC: ExtenderConfig> embedded_cal::HashAlgorithm for HashAlgorithm<EC> {
     }
 }
 
+/// The digest of the [`Extender`] as [`HashProvider`].
+///
+/// # Secret Independence Checking
+///
+/// The embedded-cal-libcrux  [`HashProvider`] uses a SHA-3 implementation
+/// provided by [libcrux-iot][li] that integrates with the [libcrux-secrets][ls] crate
+/// for lightweight secret-independence checking. This hash result enum exposes
+/// the SHA-3 digests as arrays of the [`tyalias@U8`] type alias from libcrux-secrets.
+///
+/// [li]: https://github.com/celabshq/libcrux-iot
+/// [ls]: https://docs.rs/libcrux-secrets/latest/libcrux_secrets/
 pub enum HashResult<EC: ExtenderConfig> {
     Direct(HashOutputOf<EC::Base>),
     Sha256([u8; 32]),
-    Sha3_224([u8; SHA3_224_DIGEST_SIZE]),
-    Sha3_256([u8; SHA3_256_DIGEST_SIZE]),
-    Sha3_384([u8; SHA3_384_DIGEST_SIZE]),
-    Sha3_512([u8; SHA3_512_DIGEST_SIZE]),
+    Sha3_224([U8; SHA3_224_DIGEST_SIZE]),
+    Sha3_256([U8; SHA3_256_DIGEST_SIZE]),
+    Sha3_384([U8; SHA3_384_DIGEST_SIZE]),
+    Sha3_512([U8; SHA3_512_DIGEST_SIZE]),
 }
 
 impl<EC: ExtenderConfig> AsRef<[u8]> for HashResult<EC> {
@@ -217,10 +227,12 @@ impl<EC: ExtenderConfig> AsRef<[u8]> for HashResult<EC> {
         match self {
             HashResult::Direct(result) => result.as_ref(),
             HashResult::Sha256(data) => data.as_slice(),
-            HashResult::Sha3_224(data) => data.as_slice(),
-            HashResult::Sha3_256(data) => data.as_slice(),
-            HashResult::Sha3_384(data) => data.as_slice(),
-            HashResult::Sha3_512(data) => data.as_slice(),
+            // The HashResult must impl AsRef<u8>, so we need to declassify the secret output of
+            // Sha3 to type-check under the `check-secret-independence feature`
+            HashResult::Sha3_224(data) => data.as_slice().declassify_ref(),
+            HashResult::Sha3_256(data) => data.as_slice().declassify_ref(),
+            HashResult::Sha3_384(data) => data.as_slice().declassify_ref(),
+            HashResult::Sha3_512(data) => data.as_slice().declassify_ref(),
         }
     }
 }
