@@ -24,7 +24,9 @@ use embedded_cal::{Cal, accessor::*, plumbing::Plumbing};
 use libcrux_sha2::Digest;
 
 mod aead;
+mod dh;
 mod hash;
+mod rand;
 
 pub use hash::{HashAlgorithm, HashResult, HashState};
 
@@ -45,14 +47,14 @@ impl<EC: ExtenderConfig> Extender<EC> {
 }
 
 impl<EC: ExtenderConfig> Cal for Extender<EC> {
-    type DhProvider = DhProviderOf<EC::Base>;
+    type DhProvider = Self;
     type AeadProvider = Self;
     type HashProvider = Self;
     // FIXME: This should just be provided as well.
     type HmacProvider = HmacProviderOf<EC::Base>;
 
     fn dh(&mut self) -> &mut Self::DhProvider {
-        self.0.dh()
+        self
     }
     fn aead(&mut self) -> &mut Self::AeadProvider {
         self
