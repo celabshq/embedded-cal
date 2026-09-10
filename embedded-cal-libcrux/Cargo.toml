@@ -13,8 +13,7 @@ version.workspace = true
 
 [dependencies]
 embedded-cal.path = "../embedded-cal"
-# depends on unmerged changes of https://github.com/celabshq/libcrux-iot/pull/180
-libcrux-iot-aes = { git = "https://github.com/celabshq/libcrux-iot", rev = "329603cf7474c2ba535ccd0761a05b989a0cfe59" }
+libcrux-iot-aes = { git = "https://github.com/celabshq/libcrux-iot", branch = "embedded-cal" }
 libcrux-secrets = { version = "0.0.5" }
 libcrux-sha2 = "0.0.7"
 libcrux-traits = { version = "0.0.7", features = ["error-in-core"] }
