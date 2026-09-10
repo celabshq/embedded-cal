@@ -171,36 +171,47 @@ impl<EC: ExtenderConfig> embedded_cal::HashAlgorithm for HashAlgorithm<EC> {
     fn from_cose_number(number: impl Into<i128>) -> Option<Self> {
         let number: i128 = number.into();
 
+        // Try base first, and fall back to libcrux
+        if let Some(base_algo) = HashAlgorithmOf::<EC::Base>::from_cose_number(number) {
+            return Some(HashAlgorithm::Direct(base_algo));
+        }
+
         match number {
             -16 => Some(HashAlgorithm::Sha256),
-            // There are no COSE numbers for SHA-3, so we always delegate to the base Hash in the default case
-            number => {
-                HashAlgorithmOf::<EC::Base>::from_cose_number(number).map(HashAlgorithm::Direct)
-            }
+            // There are no COSE numbers for SHA-3
+            _ => None,
         }
     }
 
     #[inline]
     fn from_ni_id(number: u8) -> Option<Self> {
+        if let Some(base_algo) = HashAlgorithmOf::<EC::Base>::from_ni_id(number) {
+            return Some(HashAlgorithm::Direct(base_algo));
+        }
+
         match number {
-            1 => Self::from_cose_number(-16),
+            1 => Some(HashAlgorithm::Sha256),
             9 => Some(HashAlgorithm::Sha3_224),
             10 => Some(HashAlgorithm::Sha3_256),
             11 => Some(HashAlgorithm::Sha3_384),
             12 => Some(HashAlgorithm::Sha3_512),
-            number => HashAlgorithmOf::<EC::Base>::from_ni_id(number).map(HashAlgorithm::Direct),
+            _ => None,
         }
     }
 
     #[inline]
     fn from_ni_name(name: &str) -> Option<Self> {
+        if let Some(base_algo) = HashAlgorithmOf::<EC::Base>::from_ni_name(name) {
+            return Some(HashAlgorithm::Direct(base_algo));
+        }
+
         match name {
-            "sha-256" => Self::from_cose_number(-16),
+            "sha-256" => Some(HashAlgorithm::Sha256),
             "sha3-224" => Some(HashAlgorithm::Sha3_224),
             "sha3-256" => Some(HashAlgorithm::Sha3_256),
             "sha3-384" => Some(HashAlgorithm::Sha3_384),
             "sha3-512" => Some(HashAlgorithm::Sha3_512),
-            name => HashAlgorithmOf::<EC::Base>::from_ni_name(name).map(HashAlgorithm::Direct),
+            _ => None,
         }
     }
 }
