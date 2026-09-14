@@ -17,6 +17,9 @@ use rand_core::Rng;
 
 use crate::{Extender, ExtenderConfig};
 
+// Length of the p256 ecdh shared secret. Currently not exposed by libcrux.
+const P256_SHARED_SECRET_LEN: usize = 32;
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum DhAlgorithm<BA> {
     P256,
@@ -25,7 +28,10 @@ pub enum DhAlgorithm<BA> {
 
 impl<Base: embedded_cal::DhAlgorithm> embedded_cal::DhAlgorithm for DhAlgorithm<Base> {
     fn output_length(&self) -> usize {
-        SECRET_LEN
+        match self {
+            DhAlgorithm::P256 => P256_SHARED_SECRET_LEN,
+            DhAlgorithm::Direct(d) => d.output_length(),
+        }
     }
 
     fn from_cose_ecdh(curve: impl Into<i128>) -> Option<Self> {
@@ -69,7 +75,7 @@ pub enum PublicKey<BPK> {
 }
 
 pub enum SharedSecret<BSS> {
-    P256([U8; SECRET_LEN]),
+    P256([U8; P256_SHARED_SECRET_LEN]),
     Direct(BSS),
 }
 
@@ -164,7 +170,8 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
                 }
                 // Sec1 compressed repr first contains an octet designating the sign of y, even = 0x02 or odd = 0x03
                 // Then the 32 bytes of the x point, 33 bytes in total.
-                let mut sec1_compressed = [0; 33];
+                debug_assert_eq!(SECRET_LEN, 32);
+                let mut sec1_compressed = [0; SECRET_LEN + 1];
                 // Set the y sign to even in the sec1 compressed representation
                 sec1_compressed[0] = 0x02;
                 sec1_compressed[1..].copy_from_slice(data);
