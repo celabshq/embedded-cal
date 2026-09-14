@@ -66,11 +66,7 @@ pub struct P256PublicKey([u8; PUBLIC_LEN]);
 impl P256PublicKey {
     fn x(&self) -> &[u8; 32] {
         const { assert!(PUBLIC_LEN == 64) };
-        self.0
-            .get(..32)
-            .expect("self.0 has len 64")
-            .try_into()
-            .expect("slice has len 32")
+        self.0.first_chunk().expect("slice has len 64")
     }
 }
 
@@ -210,8 +206,11 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
                     .map_err(|_| embedded_cal::IncompatibleKeys)?;
                 // P256::derive_ecdh returns the affine point of secret * public in big-endian format concatenated as x||y
                 // However, the ECDH shared secret should only be the x coordinate.
-                let shared_secret = point[..32].try_into().expect("point has len 64");
-                Ok(SharedSecret::P256(shared_secret))
+                const { assert!(P256_SHARED_SECRET_LEN <= 64) };
+                let shared_secret = point
+                    .first_chunk()
+                    .expect("shared_secret has len 32 <= point len 64");
+                Ok(SharedSecret::P256(*shared_secret))
             }
             (SecretKey::Direct(secret), PublicKey::Direct(public)) => self
                 .0
