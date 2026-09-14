@@ -40,7 +40,7 @@ impl<Base: embedded_cal::DhAlgorithm> embedded_cal::DhAlgorithm for DhAlgorithm<
     }
 }
 
-// We don't want to provide access to the key bytes directly, so create this
+// We don't want to provide mutable access to the key bytes, so create this
 // new-type that can be put into the pub enum
 pub struct P256SecretKey([U8; SECRET_LEN]);
 
@@ -107,7 +107,7 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
         secretkey: &'s Self::VisibleSecretKey,
     ) -> impl AsRef<[u8]> + use<'s, EC> {
         match secretkey {
-            VisibleSecretKey::P256(secret) => Either::Own(secret),
+            VisibleSecretKey::P256(secret) => Either::Own(secret.0.declassify_ref()),
             VisibleSecretKey::Direct(d) => Either::Direct(self.0.dh().export_secretkey_bytes(d)),
         }
     }
@@ -243,13 +243,6 @@ where
         }
     }
 }
-
-impl AsRef<[u8]> for P256SecretKey {
-    fn as_ref(&self) -> &[u8] {
-        self.0.declassify_ref()
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
