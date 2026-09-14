@@ -9,9 +9,8 @@ use embedded_cal::{
     util::Either,
 };
 use libcrux_iot_p256::{
-    P256,
+    P256, compressed_to_raw,
     ecdh_api::{EcdhOwned, PUBLIC_LEN, SECRET_LEN},
-    validate_public_key,
 };
 use libcrux_secrets::{ClassifyRef, DeclassifyRef, U8};
 use rand_core::Rng;
@@ -57,6 +56,12 @@ pub enum SecretKey<BSK> {
 
 // Also don't expose the public key bytes directly
 pub struct P256PublicKey([u8; PUBLIC_LEN]);
+
+impl P256PublicKey {
+    fn x(&self) -> &[u8; 32] {
+        self.0[..32].try_into().expect("slice has len 32")
+    }
+}
 
 pub enum PublicKey<BPK> {
     P256(P256PublicKey),
@@ -134,7 +139,8 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
         public: &'p Self::PublicKey,
     ) -> impl AsRef<[u8]> + use<'p, EC> {
         match public {
-            PublicKey::P256(pk_bytes) => Either::Own(pk_bytes),
+            // Return compact encoding of pk, i.e. just the x coordinate
+            PublicKey::P256(pk_bytes) => Either::Own(pk_bytes.x()),
             PublicKey::Direct(pk_bytes) => {
                 Either::Direct(self.0.dh().export_publickey_bytes(pk_bytes))
             }
@@ -148,10 +154,26 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
     ) -> Result<Self::PublicKey, embedded_cal::ImportError> {
         match alg {
             DhAlgorithm::P256 => {
-                if !validate_public_key(data) {
+                // The trait requires the pk to be in the RFC 9528 compact representation, i.e. just the x coordinate.
+                // Here, we reuse the libcrux p256 sec1 compressed decoding and just set the y sign to always
+                // be even.
+                // This trick is described in https://datatracker.ietf.org/doc/html/rfc9528#name-compact-representation
+                // which defines the compact representation.
+                if data.len() != 32 {
                     return Err(embedded_cal::ImportError);
                 }
-                let pk = data.try_into().map_err(|_| embedded_cal::ImportError)?;
+                // Sec1 compressed repr first contains an octet designating the sign of y, even = 0x02 or odd = 0x03
+                // Then the 32 bytes of the x point, 33 bytes in total.
+                let mut sec1_compressed = [0; 33];
+                // Set the y sign to even in the sec1 compressed representation
+                sec1_compressed[0] = 0x02;
+                sec1_compressed[1..].copy_from_slice(data);
+
+                let mut pk = [0; PUBLIC_LEN];
+                // compressed_to_raw also checks the validity of (x, y)
+                if !compressed_to_raw(&sec1_compressed, &mut pk) {
+                    return Err(embedded_cal::ImportError);
+                }
                 Ok(PublicKey::P256(P256PublicKey(pk)))
             }
             DhAlgorithm::Direct(base_algo) => self
@@ -228,11 +250,6 @@ impl AsRef<[u8]> for P256SecretKey {
     }
 }
 
-impl AsRef<[u8]> for P256PublicKey {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -251,7 +268,7 @@ mod tests {
         let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
 
         embedded_cal::test_dh_algorithm_ecdh_p256::<Extender<TestConfig>>();
-        for v in testvectors::dh::RFC5903_LARGE_PK_P256 {
+        for v in testvectors::dh::RFC5903_P256 {
             v.test_with(cal.dh());
         }
     }
