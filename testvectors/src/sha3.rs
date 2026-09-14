@@ -1,5 +1,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
+//! SHA-3 test vectors.
+//!
+//! The input vectors are the same as [`crate::SHA256HASHES`]. The expected
+//! outputs were computed using [rust-crypto/sha3][sha3] version 0.12.0.
+//!
+//! [sha3]: https://crates.io/crates/sha3
 
 use embedded_cal::HashAlgorithm;
 use hexlit::hex;
