@@ -175,7 +175,7 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
                 }
                 // Sec1 compressed repr first contains an octet designating the sign of y, even = 0x02 or odd = 0x03
                 // Then the 32 bytes of the x point, 33 bytes in total.
-                debug_assert_eq!(SECRET_LEN, 32);
+                const { assert!(SECRET_LEN == 32) };
                 let mut sec1_compressed = [0; SECRET_LEN + 1];
                 // Set the y sign to even in the sec1 compressed representation
                 sec1_compressed[0] = 0x02;
