@@ -70,16 +70,9 @@ impl<EC: ExtenderConfig> HashProvider for Extender<EC> {
     }
 
     fn update(&mut self, instance: &mut Self::State, data: &[u8]) {
-        match instance {
-            HashState::Direct(i) => self.0.hash().update(i, data),
-            HashState::Sha256(s) => s.0.update(data),
-            // classify the data for compatibility with libcrux_iot_sha3 when the check-secret-independence
-            // feature is activated. No-op if the feature is disabled.
-            HashState::Sha3_224(s) => s.0.update(data.classify_ref()),
-            HashState::Sha3_256(s) => s.0.update(data.classify_ref()),
-            HashState::Sha3_384(s) => s.0.update(data.classify_ref()),
-            HashState::Sha3_512(s) => s.0.update(data.classify_ref()),
-        }
+        // classify the data for compatibility with libcrux_iot_sha3 when the check-secret-independence
+        // feature is activated. No-op if the feature is disabled.
+        self.update_with_classified(instance, data.classify_ref());
     }
 
     fn finalize(&mut self, instance: Self::State) -> Self::Output {
@@ -94,6 +87,45 @@ impl<EC: ExtenderConfig> HashProvider for Extender<EC> {
             HashState::Sha3_256(s) => HashResult::Sha3_256(s.0.finish()),
             HashState::Sha3_384(s) => HashResult::Sha3_384(s.0.finish()),
             HashState::Sha3_512(s) => HashResult::Sha3_512(s.0.finish()),
+        }
+    }
+}
+
+impl<EC: ExtenderConfig> Extender<EC> {
+    /// Update the hash state with [`tyalias@U8`] data.
+    ///
+    /// This is intended for compatibility with libcrux APIs that work on the
+    /// [libcrux-secrets][ls] types. If a SHA-3 algorithm was selected,
+    /// the classified data is passed directly to the libcrux-iot SHA-3 implementation.  
+    /// For the other backends, the data is first [declassified][dc], which is a noop
+    /// if the `check-secret-independence` feature is not enabled.
+    ///
+    /// <div class="warning">
+    ///
+    /// If this method is used with the `check-secret-independence` feature and a
+    /// hash algorithm other than SHA-3, a successful compilation **does not** constitute
+    /// a proof that the hash algorithm implementation is secret independent.
+    ///
+    /// </div>
+    ///
+    /// [ls]: https://docs.rs/libcrux-secrets/latest/libcrux_secrets/
+    /// [dc]: https://docs.rs/libcrux-secrets/latest/libcrux_secrets/trait.Declassify.html
+    /// [ha]: `embedded_cal::HashAlgorithm`
+    pub fn update_with_classified(
+        &mut self,
+        instance: &mut <Self as HashProvider>::State,
+        data: &[U8],
+    ) {
+        match instance {
+            // declassify the data for compatibility with the direct and sha2 algorithms
+            // when the check-secret-independence feature is activated. No-op if the feature
+            // is disabled.
+            HashState::Direct(i) => self.0.hash().update(i, data.declassify_ref()),
+            HashState::Sha256(s) => s.0.update(data.declassify_ref()),
+            HashState::Sha3_224(s) => s.0.update(data),
+            HashState::Sha3_256(s) => s.0.update(data),
+            HashState::Sha3_384(s) => s.0.update(data),
+            HashState::Sha3_512(s) => s.0.update(data),
         }
     }
 }
@@ -290,5 +322,14 @@ mod tests {
     fn test_hash_algorithm_sha3_512() {
         let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
         testvectors::sha3::test_hash_algorithm_sha3_512(&mut cal);
+    }
+
+    /// Test that the `update_with_classified` API type-checks.
+    #[test]
+    fn test_update_with_classified_sha3_256() {
+        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut state = cal.init(HashAlgorithm::Sha3_256);
+        cal.update_with_classified(&mut state, [0; 200].classify_ref());
+        let _result = cal.finalize(state);
     }
 }
