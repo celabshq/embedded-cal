@@ -227,6 +227,7 @@ impl<EC: ExtenderConfig> embedded_cal::HashAlgorithm for HashAlgorithm<EC> {
 ///
 /// [li]: https://github.com/celabshq/libcrux-iot
 /// [ls]: https://docs.rs/libcrux-secrets/latest/libcrux_secrets/
+#[non_exhaustive]
 pub enum HashResult<EC: ExtenderConfig> {
     Direct(HashOutputOf<EC::Base>),
     Sha256([u8; 32]),
