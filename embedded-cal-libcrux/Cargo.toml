@@ -33,3 +33,4 @@ rand_core = "0.10"
 
 [dev-dependencies]
 testvectors.path = "../testvectors"
+rand = "0.10.2"

@@ -26,16 +26,18 @@ use libcrux_sha2::Digest;
 mod aead;
 mod dh;
 mod hash;
-mod rand;
+mod rng;
 
 pub use hash::{HashAlgorithm, HashResult, HashState};
+pub use rng::WithRng;
 
 pub trait ExtenderConfig {
     // Currently we could also just have a Base in the generic and do not use Plumbing, but we
     // *will* use it in the future, and that will need more options, so this is reusing the design
     // of -software-demo even though there is no immediate benefit.
-
-    type Base: Cal + Plumbing;
+    // Base needs to implement the Infallible CryptoRng trait as the `DhProvider::generate_visible`
+    // method is infallible and can't return an Rng failure.
+    type Base: Cal + Plumbing + rand_core::CryptoRng;
 }
 
 pub struct Extender<EC: ExtenderConfig>(EC::Base);

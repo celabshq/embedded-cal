@@ -99,7 +99,7 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
                 // It only checks whether the provided random value would be a valid key or not,
                 // so we implement a simple rejection sampling here.
                 loop {
-                    self.fill_bytes(&mut rand);
+                    self.0.fill_bytes(&mut rand);
                     if let Ok(secret) = P256::generate_secret(rand.classify_ref()) {
                         return VisibleSecretKey::P256(P256SecretKey(secret));
                     }
@@ -257,19 +257,19 @@ where
 
 #[cfg(test)]
 mod tests {
-    use embedded_cal::Cal;
+    use embedded_cal::{Cal, empty::EmptyCal};
 
-    use crate::{Extender, ExtenderConfig};
+    use crate::{Extender, ExtenderConfig, rng::WithRng};
 
     struct TestConfig;
 
     impl ExtenderConfig for TestConfig {
-        type Base = embedded_cal::empty::EmptyCal;
+        type Base = WithRng<EmptyCal, rand::rngs::StdRng>;
     }
 
     #[test]
     fn test_dh_ecdh_p256() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut cal = Extender::<TestConfig>::new(WithRng::new(EmptyCal, rand::make_rng()));
 
         embedded_cal::test_dh_algorithm_ecdh_p256::<Extender<TestConfig>>();
         for v in testvectors::dh::RFC5903_P256 {
