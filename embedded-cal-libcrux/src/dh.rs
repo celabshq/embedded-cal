@@ -65,7 +65,12 @@ pub struct P256PublicKey([u8; PUBLIC_LEN]);
 
 impl P256PublicKey {
     fn x(&self) -> &[u8; 32] {
-        self.0[..32].try_into().expect("slice has len 32")
+        const { assert!(PUBLIC_LEN == 64) };
+        self.0
+            .get(..32)
+            .expect("self.0 has len 64")
+            .try_into()
+            .expect("slice has len 32")
     }
 }
 
