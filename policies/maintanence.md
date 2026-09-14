@@ -17,7 +17,9 @@ and being capable of acting even when individual maintainers are currently unava
 
 ## Review and merging
 
-Maintainers can merge changes that passed a maintainer's review.
+Maintainers can merge changes that passed a maintainer's review,
+unless either the author or the reviewer has left remarks on holding off merges
+(e.g. because there is some coordination pending with other projects).
 
 In general, we require that any change be checked by two people, thereof one maintainer
 (typically the author and a reviewer).
