@@ -1,11 +1,23 @@
 <!--
 SPDX-License-Identifier: MIT OR Apache-2.0
+SPDX-FileCopyrightText: The Rust Project Developers
 SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
+
+This document is derived from the Rust project's LLM usage policy
+(https://github.com/rust-lang/rust-forge/blob/master/src/policies/llm-usage.md,
+licensed MIT OR Apache-2.0), with the project name swapped and sections
+specific to rust-lang tooling and moderation removed.
 -->
 
 # LLM Usage Policy
 
 This is a policy for how LLMs are used in `lake-rs/embedded-cal`.
+
+It is adapted from the [Rust project's LLM usage policy](https://github.com/rust-lang/rust-forge/blob/master/src/policies/llm-usage.md), and much of the text is taken from there verbatim.
+This policy is expected to change over time:
+it will be revised as we gain experience with it,
+and in particular we intend to align it with more widely shared standard text as such text becomes available
+(for example from the Rust project or from the wider embedded Rust ecosystem).
 
 ## Overview
 
