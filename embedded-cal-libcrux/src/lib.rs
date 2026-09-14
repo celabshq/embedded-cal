@@ -26,7 +26,7 @@ use libcrux_sha2::Digest;
 mod aead;
 mod hash;
 
-pub use hash::{HashAlgorithm, HashResult, HashState};
+pub use hash::HashResult;
 
 pub trait ExtenderConfig {
     // Currently we could also just have a Base in the generic and do not use Plumbing, but we
