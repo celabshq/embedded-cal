@@ -259,7 +259,8 @@ where
 mod tests {
     use embedded_cal::{Cal, empty::EmptyCal};
 
-    use crate::{Extender, ExtenderConfig, rng::WithRng};
+    use crate::{Extender, ExtenderConfig};
+    use embedded_cal_rand::WithRng;
 
     struct TestConfig;
 

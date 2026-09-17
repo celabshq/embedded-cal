@@ -453,7 +453,7 @@ name = "embedded-cal-libcrux"
 version = "0.1.0"
 dependencies = [
  "embedded-cal",
- "getrandom 0.4.2",
+ "embedded-cal-rand",
  "libcrux-iot-aes",
  "libcrux-iot-p256",
  "libcrux-iot-sha3",
@@ -481,6 +481,14 @@ dependencies = [
  "rand_core 0.10.1",
  "testvectors",
  "zeroize",
+]
+
+[[package]]
+name = "embedded-cal-rand"
+version = "0.1.0"
+dependencies = [
+ "embedded-cal",
+ "rand_core 0.10.1",
 ]
 
 [[package]]

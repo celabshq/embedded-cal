@@ -255,6 +255,7 @@ impl<EC: ExtenderConfig> AsRef<[u8]> for HashResult<EC> {
 #[cfg(test)]
 mod tests {
     use embedded_cal::empty::EmptyCal;
+    use embedded_cal_rand::WithRng;
     use rand::rngs::StdRng;
 
     use super::*;

@@ -28,9 +28,9 @@ libcrux-secrets = { version = "0.0.5" }
 libcrux-sha2 = "0.0.7"
 libcrux-traits = { version = "0.0.7", features = ["error-in-core"] }
 
-getrandom = { version = "0.4", default-features = false }
 rand_core = "0.10"
 
 [dev-dependencies]
 testvectors.path = "../testvectors"
 rand = "0.10.2"
+embedded-cal-rand.path = "../embedded-cal-rand"

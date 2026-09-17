@@ -35,7 +35,6 @@ mod hash;
 mod rng;
 
 pub use hash::HashResult;
-pub use rng::WithRng;
 
 pub trait ExtenderConfig {
     // Currently we could also just have a Base in the generic and do not use Plumbing, but we

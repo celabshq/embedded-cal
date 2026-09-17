@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT OR Apache-2.0
+# SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
+
+[package]
+name = "embedded-cal-rand"
+edition.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+version.workspace = true
+
+[dependencies]
+embedded-cal.path = "../embedded-cal"
+
+rand_core = "0.10"

@@ -298,7 +298,8 @@ impl<EC: ExtenderConfig> AsRef<[u8]> for Tag<EC> {
 mod tests {
     use embedded_cal::empty::EmptyCal;
 
-    use crate::{Extender, ExtenderConfig, WithRng};
+    use crate::{Extender, ExtenderConfig};
+    use embedded_cal_rand::WithRng;
 
     struct TestConfig;
 
