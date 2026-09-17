@@ -1,5 +1,39 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
+//! embedded-cal is a family of interface traits around cryptography, primarily [`Cal`].
+//!
+//! *Users of the trait* can implement their high-level cryptographic protocol implementation
+//! libraries or applications on top of the trait, and use hardware acceleration available on some
+//! platforms, without being tied to a particular implementation of the algorithms or a aprticular
+//! acceleration module. *Providers of the trait* can be software implementations, specific
+//! hardware platforms, or embedded operating systems that provide whichever acceleration or
+//! algorithms are configured for a givens build. Neither the users or nor the providers are
+//! generally implemented in this crate; however, being the centerpiece of the embedded-cal
+//! ecosystem, this documentation points to some noteworthy implementations outside the crate.
+//!
+//! ## Distinguishing properties and related work
+//!
+//! The interfaces of this crate are geared towards *cryptographic agility*: An application should
+//! not need to be changed in order to support a larger set of hash functions or elliptic curves.
+//! This is aligned with how higher-level cryptographic systems such as COSE or TLS work:
+//! algorithms are negotiated rather than built into the protocol. In this, embedded-cal is
+//! distinct from many rustcrypto traits such as [`aead`](https://docs.rs/aead/latest/aead/) or
+//! [`digest`](https://docs.rs/digest/latest/digest/), through which generic application code gets
+//! monomorphized onto a concrete algorithm.
+//!
+//! The crates focus on the *Embedded Rust ecosystem*, which includes bare metal and RTOS
+//! applications. It is `no_std`, and does not use dynamic allocation in general. In this,
+//! embedded-cal is distinct from the otherwise similar [PSA Crypto
+//! API](https://arm-software.github.io/psa-api/crypto/) (which uses C embedded idioms).
+//!
+//! Implementations of embedded-cal are *composable*: Rather than having to select a single
+//! provider of cryptographic tools, it allows picking suitable parts. For example, a software
+//! implementation can be composed from the OS's source of randomness and the [libcrux software
+//! implementation](https://crates.io/crates/embedded-cal-libcrux); on embedded hardware, there is
+//! typically one layer of what the hardware can do, augmented by a software layer that fills gaps
+//! (e.g. when the hardware accelerates elliptic curves primitives, and the software then make a
+//! full DH key establishment out of it). Also, different algorithms can be served by different
+//! components.
 #![no_std]
 
 pub mod empty;
