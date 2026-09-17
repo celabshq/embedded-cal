@@ -21,9 +21,23 @@ pub struct WithRng<C, R> {
     pub rng: R,
 }
 
+#[cfg(feature = "with_sys")]
+pub type WithSysRng<C> = WithRng<C, rand::rngs::StdRng>;
+
 impl<C, R> WithRng<C, R> {
     pub fn new(cal: C, rng: R) -> Self {
         WithRng { cal, rng }
+    }
+}
+
+#[cfg(feature = "with_sys")]
+impl<C> WithRng<C, rand::rngs::StdRng> {
+    /// Constructs an extender that uses an [`rand::rngs::StdRng`] seeded from the system.
+    pub fn new_with_sys(cal: C) -> Self {
+        WithRng {
+            cal,
+            rng: rand::make_rng(),
+        }
     }
 }
 

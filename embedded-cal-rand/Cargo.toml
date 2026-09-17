@@ -15,3 +15,9 @@ version.workspace = true
 embedded-cal.path = "../embedded-cal"
 
 rand_core = "0.10"
+
+rand = {version = "0.10", optional = true, features = ["std_rng", "sys_rng"], default-features = false }
+
+[features]
+## Enables the [`WithRng::new_with_sys()`] constructor.
+with_sys = ["dep:rand"]

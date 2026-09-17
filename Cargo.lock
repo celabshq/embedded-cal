@@ -488,6 +488,7 @@ name = "embedded-cal-rand"
 version = "0.1.0"
 dependencies = [
  "embedded-cal",
+ "rand",
  "rand_core 0.10.1",
 ]
 
