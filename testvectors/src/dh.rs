@@ -64,11 +64,24 @@ impl EccVector {
             .import_secretkey_bytes(alg.clone(), private_bytes)
             .unwrap_or_else(|_| panic!("failed to load {name}'s secret key"));
 
-        assert_eq!(
-            cal.export_secretkey_bytes(&private_visible).as_ref(),
-            private_bytes,
-            "{name}'s secret key did not round-trip through import/export"
-        );
+        // We cannot test export(import(x)) == x, because some implementations clamp on import
+        // (the nRF54L15 back-end pre-clamps X25519 and X448 scalars as in RFC7748's decodeScalar),
+        // and that operation loses information.
+        // Instead we are testing the idempotence export(import(export(import(x)))) == export(import(x)).
+        //
+        // The scope keeps `exported`'s borrow of `private_visible` from outliving the check;
+        // the returned `impl AsRef<[u8]>` may have a destructor, so NLL cannot end it early.
+        {
+            let exported = cal.export_secretkey_bytes(&private_visible);
+            let reimported = cal
+                .import_secretkey_bytes(alg.clone(), exported.as_ref())
+                .unwrap_or_else(|_| panic!("failed to re-import {name}'s exported secret key"));
+            assert_eq!(
+                cal.export_secretkey_bytes(&reimported).as_ref(),
+                exported.as_ref(),
+                "{name}'s secret key did not round-trip through export/import"
+            );
+        }
 
         let private = private_visible.into();
         let public = cal.public_key(&private);
