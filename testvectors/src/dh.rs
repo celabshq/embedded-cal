@@ -7,8 +7,10 @@ pub struct EccVector {
     // extend as needed
     ecdh_curve: i8,
     alice_private: &'static [u8],
+    alice_private_clamped: Option<&'static [u8]>,
     alice_public: &'static [u8],
     bob_private: &'static [u8],
+    bob_private_clamped: Option<&'static [u8]>,
     bob_public: &'static [u8],
     shared_secret: &'static [u8],
 }
@@ -54,9 +56,13 @@ impl EccVector {
         let alg =
             C::Algorithm::from_cose_ecdh(self.ecdh_curve).expect("algorithm not supported by CAL");
 
-        let (private_bytes, public_bytes) = match name {
-            "Alice" => (self.alice_private, self.alice_public),
-            "Bob" => (self.bob_private, self.bob_public),
+        let (private_bytes, private_clamped_bytes, public_bytes) = match name {
+            "Alice" => (
+                self.alice_private,
+                self.alice_private_clamped,
+                self.alice_public,
+            ),
+            "Bob" => (self.bob_private, self.bob_private_clamped, self.bob_public),
             _ => panic!("name must be Alice or Bob"),
         };
 
@@ -81,6 +87,28 @@ impl EccVector {
                 exported.as_ref(),
                 "{name}'s secret key did not round-trip through export/import"
             );
+            // While we can't directly check for export(import(x)) == x due to clamping,
+            // we can check for export(import(x)) == x || export(import(x)) == clamped(x).
+            // This ensures the export is not catastrophically wrong (e.g. returning an all-zeros slice),
+            // which would be permitted by the previously checked property.
+            if private_bytes != exported.as_ref() {
+                if let Some(private_clamped_bytes) = private_clamped_bytes
+                    && private_clamped_bytes != exported.as_ref()
+                {
+                    // Reuse assert_eq here for formatting. It will always fail at this point.
+                    assert_eq!(
+                        exported.as_ref(),
+                        private_clamped_bytes,
+                        "{name}'s exported secret key matches neither nor or unclamped private key bytes"
+                    );
+                } else {
+                    assert_eq!(
+                        exported.as_ref(),
+                        private_bytes,
+                        "{name}'s exported secret key does not match private key bytes"
+                    );
+                }
+            }
         }
 
         let private = private_visible.into();
@@ -105,16 +133,39 @@ impl EccVector {
     }
 }
 
+/// Clamping of decodeScalar25519(k) in
+/// <https://datatracker.ietf.org/doc/html/rfc7748.html#section-5>
+const fn clamp_x25519(mut k_list: [u8; 32]) -> [u8; 32] {
+    k_list[0] &= 248;
+    k_list[31] &= 127;
+    k_list[31] |= 64;
+    k_list
+}
+
 // Test vectors from Section 6.1 of RFC7748
 // <https://datatracker.ietf.org/doc/html/rfc7748.html#section-6.1>
 pub const RFC7748_X25519: &[EccVector] = &[EccVector {
     ecdh_curve: 4,
     alice_private: &hex!("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a"),
+    alice_private_clamped: Some(&clamp_x25519(hex!(
+        "77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a"
+    ))),
     alice_public: &hex!("8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a"),
     bob_private: &hex!("5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb"),
+    bob_private_clamped: Some(&clamp_x25519(hex!(
+        "5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb"
+    ))),
     bob_public: &hex!("de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f"),
     shared_secret: &hex!("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742"),
 }];
+
+/// Clamping of decodeScalar448(k) in
+/// <https://datatracker.ietf.org/doc/html/rfc7748.html#section-5>
+const fn clamp_x448(mut k_list: [u8; 56]) -> [u8; 56] {
+    k_list[0] &= 252;
+    k_list[55] |= 128;
+    k_list
+}
 
 // Test vectors from Section 6.2 of RFC7748
 // <https://datatracker.ietf.org/doc/html/rfc7748.html#section-6.2>
@@ -123,12 +174,18 @@ pub const RFC7748_X448: &[EccVector] = &[EccVector {
     alice_private: &hex!(
         "9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b"
     ),
+    alice_private_clamped: Some(&clamp_x448(hex!(
+        "9a8f4925d1519f5775cf46b04b5800d4ee9ee8bae8bc5565d498c28dd9c9baf574a9419744897391006382a6f127ab1d9ac2d8c0a598726b"
+    ))),
     alice_public: &hex!(
         "9b08f7cc31b7e3e67d22d5aea121074a273bd2b83de09c63faa73d2c22c5d9bbc836647241d953d40c5b12da88120d53177f80e532c41fa0"
     ),
     bob_private: &hex!(
         "1c306a7ac2a0e2e0990b294470cba339e6453772b075811d8fad0d1d6927c120bb5ee8972b0d3e21374c9c921b09d1b0366f10b65173992d"
     ),
+    bob_private_clamped: Some(&clamp_x448(hex!(
+        "1c306a7ac2a0e2e0990b294470cba339e6453772b075811d8fad0d1d6927c120bb5ee8972b0d3e21374c9c921b09d1b0366f10b65173992d"
+    ))),
     bob_public: &hex!(
         "3eb7a829b0cd20f5bcfc0b599b6feccf6da4627107bdb0d4f345b43027d8b972fc3e34fb4232a13ca706dcb57aec3dae07bdc1c67bf33609"
     ),
@@ -141,9 +198,11 @@ pub const RFC5903_P256: &[EccVector] = &[EccVector {
     ecdh_curve: 1,
     // "initiator"
     alice_private: &hex!("C88F01F5 10D9AC3F 70A292DA A2316DE5 44E9AAB8 AFE84049 C62A9C57 862D1433"),
+    alice_private_clamped: None,
     alice_public: &hex!("DAD0B653 94221CF9 B051E1FE CA5787D0 98DFE637 FC90B9EF 945D0C37 72581180"),
     // "responder"
     bob_private: &hex!("C6EF9C5D 78AE012A 011164AC B397CE20 88685D8F 06BF9BE0 B283AB46 476BEE53"),
+    bob_private_clamped: None,
     bob_public: &hex!("D12DFB52 89C8D4F8 1208B702 70398C34 2296970A 0BCCB74C 736FC755 4494BF63"),
     shared_secret: &hex!("D6840F6B 42F6EDAF D13116E0 E1256520 2FEF8E9E CE7DCE03 812464D0 4B9442DE"),
 }];
