@@ -99,7 +99,7 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
                 // It only checks whether the provided random value would be a valid key or not,
                 // so we implement a simple rejection sampling here.
                 loop {
-                    self.0.fill_bytes(&mut rand);
+                    self.fill_bytes(&mut rand);
                     if let Ok(secret) = P256::generate_secret(rand.classify_ref()) {
                         return VisibleSecretKey::P256(P256SecretKey(secret));
                     }
