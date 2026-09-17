@@ -32,5 +32,4 @@ rand_core = "0.10"
 
 [dev-dependencies]
 testvectors.path = "../testvectors"
-rand = "0.10.2"
-embedded-cal-rand.path = "../embedded-cal-rand"
+embedded-cal-rand = { path = "../embedded-cal-rand", features = ["with_sys"] }

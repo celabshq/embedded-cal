@@ -460,7 +460,6 @@ dependencies = [
  "libcrux-secrets",
  "libcrux-sha2",
  "libcrux-traits",
- "rand",
  "rand_core 0.10.1",
  "testvectors",
 ]
