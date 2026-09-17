@@ -34,6 +34,12 @@ mod dh;
 mod hash;
 mod rng;
 
+#[cfg(feature = "standalone")]
+mod standalone;
+
+#[cfg(feature = "standalone")]
+pub use standalone::{Standalone, StandaloneConfig};
+
 pub use hash::HashResult;
 
 pub trait ExtenderConfig {
