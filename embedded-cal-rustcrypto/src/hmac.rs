@@ -2,13 +2,13 @@
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
 use super::*;
-use ::hmac::Mac;
+use ::hmac::{Mac, KeyInit};
 use embedded_cal::{Cal, HmacProvider};
 
 type HmacSha256 = ::hmac::Hmac<sha2::Sha256>;
 
 // std only macro-generates `Default` for arrays up to 32 elements
-type MaxLenBuf = digest::generic_array::GenericArray<u8, digest::consts::U64>;
+type MaxLenBuf = generic_array::GenericArray<u8, digest::consts::U64>;
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum HmacAlgorithm<BA> {
