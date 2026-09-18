@@ -105,7 +105,7 @@ impl<Base: Cal> AeadProvider for RustcryptoCalExtender<Base> {
         message: &mut [u8],
         aad: impl embedded_cal::AadGenerator,
     ) -> Self::Tag {
-        use ccm::{KeyInit, aead::AeadInPlace};
+        use ccm::{KeyInit, aead::AeadInOut};
 
         if let AeadKey::Direct(key) = key {
             return AeadTag::Direct(self.base.aead().encrypt_in_place(key, nonce, message, aad));
@@ -116,20 +116,20 @@ impl<Base: Cal> AeadProvider for RustcryptoCalExtender<Base> {
         match key {
             AeadKey::AesCcm16_64_128(key) => AeadTag::AesCcm16_64_128(
                 AesCcm16_64_128::new(key.into())
-                    .encrypt_in_place_detached(
+                    .encrypt_inout_detached(
                         nonce.try_into().expect("nonce length mismatch"),
                         aad_linear.as_ref(),
-                        message,
+                        message.into(),
                     )
                     .expect("Preconfigured sizes should not allow encryption to fail")
                     .into(),
             ),
             AeadKey::AesCcm16_64_256(key) => AeadTag::AesCcm16_64_256(
                 AesCcm16_64_256::new(key.into())
-                    .encrypt_in_place_detached(
+                    .encrypt_inout_detached(
                         nonce.try_into().expect("nonce length mismatch"),
                         aad_linear.as_ref(),
-                        message,
+                        message.into(),
                     )
                     .expect("Preconfigured sizes should not allow encryption to fail")
                     .into(),
@@ -152,7 +152,7 @@ impl<Base: Cal> AeadProvider for RustcryptoCalExtender<Base> {
         tag: &[u8],
         aad: impl embedded_cal::AadGenerator,
     ) -> Result<(), embedded_cal::DecryptionFailed> {
-        use ccm::{KeyInit, aead::AeadInPlace};
+        use ccm::{KeyInit, aead::AeadInOut};
 
         if let AeadKey::Direct(key) = key {
             return self
@@ -165,18 +165,18 @@ impl<Base: Cal> AeadProvider for RustcryptoCalExtender<Base> {
 
         match key {
             AeadKey::AesCcm16_64_128(key) => AesCcm16_64_128::new(key.into())
-                .decrypt_in_place_detached(
+                .decrypt_inout_detached(
                     nonce.try_into().expect("nonce length mismatch"),
                     aad_linear.as_ref(),
-                    message,
+                    message.into(),
                     tag.try_into().expect("tag length mismatch"),
                 )
                 .map_err(|_| embedded_cal::DecryptionFailed),
             AeadKey::AesCcm16_64_256(key) => AesCcm16_64_256::new(key.into())
-                .decrypt_in_place_detached(
+                .decrypt_inout_detached(
                     nonce.try_into().expect("nonce length mismatch"),
                     aad_linear.as_ref(),
-                    message,
+                    message.into(),
                     tag.try_into().expect("tag length mismatch"),
                 )
                 .map_err(|_| embedded_cal::DecryptionFailed),
