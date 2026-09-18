@@ -31,7 +31,7 @@ libcrux-secrets = { version = "0.0.5" }
 libcrux-sha2 = "0.0.7"
 libcrux-traits = { version = "0.0.7", features = ["error-in-core"] }
 
-rand_core = "0.10"
+rand_core.workspace = true
 
 embedded-cal-rand = { path = "../embedded-cal-rand", features = ["with_sys"], optional = true }
 
