@@ -13,8 +13,13 @@ impl<Base: Cal> DhProvider for RustcryptoCalExtender<Base> {
 
     fn generate_visible(&mut self, alg: Self::Algorithm) -> Self::VisibleSecretKey {
         // We're not wrapping anything, so no point in deferring to the self RNG.
+        use p256::elliptic_curve::Generate;
         match alg {
-            DhAlgorithm::P256 => VisibleSecretKey::P256(p256::SecretKey::random(&mut OldRng(self))),
+            DhAlgorithm::P256 => {
+                VisibleSecretKey::P256(match p256::SecretKey::try_generate_from_rng(self) {
+                    Ok(s) => s,
+                })
+            }
             DhAlgorithm::X25519 => {
                 VisibleSecretKey::X25519(x25519_dalek::StaticSecret::random_from_rng(OldRng(self)))
             }
@@ -110,11 +115,11 @@ impl<Base: Cal> DhProvider for RustcryptoCalExtender<Base> {
         &mut self,
         public: &'p Self::PublicKey,
     ) -> impl AsRef<[u8]> + use<'p, Base> {
-        use p256::elliptic_curve::sec1::ToEncodedPoint;
+        use p256::elliptic_curve::sec1::ToSec1Point;
         match public {
             PublicKey::P256(public_key) => Either::Own(
                 *public_key
-                    .to_encoded_point(false)
+                    .to_sec1_point(false)
                     .x()
                     .unwrap()
                     .as_array()
