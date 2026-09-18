@@ -21,7 +21,7 @@ impl<Base: Cal> DhProvider for RustcryptoCalExtender<Base> {
                 })
             }
             DhAlgorithm::X25519 => {
-                VisibleSecretKey::X25519(x25519_dalek::StaticSecret::random_from_rng(OldRng(self)))
+                VisibleSecretKey::X25519(x25519_dalek::StaticSecret::random_from_rng(self))
             }
             DhAlgorithm::Direct(d) => VisibleSecretKey::Direct(self.base.dh().generate_visible(d)),
         }
@@ -232,26 +232,4 @@ pub enum PublicKey<BPK> {
 pub enum SharedSecret<BSS> {
     Length32([u8; 32]),
     Direct(BSS),
-}
-
-struct OldRng<'c, C: embedded_cal::Cal>(&'c mut C);
-
-impl<'c, C: embedded_cal::Cal + rand_core::CryptoRng> rand_core_06::CryptoRng for OldRng<'c, C> {}
-impl<'c, C: embedded_cal::Cal + rand_core::CryptoRng> rand_core_06::RngCore for OldRng<'c, C> {
-    fn next_u32(&mut self) -> u32 {
-        self.0.next_u32()
-    }
-
-    fn next_u64(&mut self) -> u64 {
-        self.0.next_u64()
-    }
-
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        self.0.fill_bytes(dest)
-    }
-
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core_06::Error> {
-        self.0.fill_bytes(dest);
-        Ok(())
-    }
 }
