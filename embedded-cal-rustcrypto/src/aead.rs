@@ -105,7 +105,7 @@ impl<Base: Cal> AeadProvider for RustcryptoCalExtender<Base> {
         message: &mut [u8],
         aad: impl embedded_cal::AadGenerator,
     ) -> Self::Tag {
-        use ccm::{AeadInPlace, KeyInit};
+        use ccm::{KeyInit, aead::AeadInPlace};
 
         if let AeadKey::Direct(key) = key {
             return AeadTag::Direct(self.base.aead().encrypt_in_place(key, nonce, message, aad));
@@ -152,7 +152,7 @@ impl<Base: Cal> AeadProvider for RustcryptoCalExtender<Base> {
         tag: &[u8],
         aad: impl embedded_cal::AadGenerator,
     ) -> Result<(), embedded_cal::DecryptionFailed> {
-        use ccm::{AeadInPlace, KeyInit};
+        use ccm::{KeyInit, aead::AeadInPlace};
 
         if let AeadKey::Direct(key) = key {
             return self
