@@ -25,9 +25,13 @@ zeroize = { version = "1.8.2", default-features = false }
 
 generic-array = "1.4.0"
 
-getrandom = { version = "0.4", default-features = false }
 rand_core.workspace = true
 x25519-dalek = { version = "3.0.0", default-features = false, features = ["static_secrets", "zeroize"] }
+
+embedded-cal-rand = { path = "../embedded-cal-rand", features = ["new_from_sys"], optional = true }
+
+[dev-dependencies]
+embedded-cal-rand = { path = "../embedded-cal-rand", features = ["new_from_sys"] }
 
 [features]
 ## Enables the use of the system allocator for AEAD algorithms.
@@ -41,3 +45,6 @@ x25519-dalek = { version = "3.0.0", default-features = false, features = ["stati
 ## is allocated inside the `Cal` instance, and exceeding that size is treated
 ## similar to a memory allocation failure, resulting in a panic.
 alloc = []
+
+## Enables the `RustcryptoCal::new()` constructor.
+standalone = ["embedded-cal-rand"]

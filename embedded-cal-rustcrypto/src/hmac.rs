@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
 use super::*;
-use ::hmac::{Mac, KeyInit};
+use ::hmac::{KeyInit, Mac};
 use embedded_cal::{Cal, HmacProvider};
 
 type HmacSha256 = ::hmac::Hmac<sha2::Sha256>;

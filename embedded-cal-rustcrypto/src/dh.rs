@@ -4,7 +4,10 @@
 use super::*;
 use embedded_cal::{Cal, DhProvider, ImportError, util::Either};
 
-impl<Base: Cal> DhProvider for RustcryptoCalExtender<Base> {
+impl<Base> DhProvider for RustcryptoCalExtender<Base>
+where
+    Base: Cal + rand_core::TryCryptoRng<Error = core::convert::Infallible>,
+{
     type Algorithm = DhAlgorithm<DhAlgorithmOf<Base>>;
     type VisibleSecretKey = VisibleSecretKey<DhVisibleSecretKeyOf<Base>>;
     type SecretKey = SecretKey<DhSecretKeyOf<Base>>;
@@ -15,11 +18,7 @@ impl<Base: Cal> DhProvider for RustcryptoCalExtender<Base> {
         // We're not wrapping anything, so no point in deferring to the self RNG.
         use p256::elliptic_curve::Generate;
         match alg {
-            DhAlgorithm::P256 => {
-                VisibleSecretKey::P256(match p256::SecretKey::try_generate_from_rng(self) {
-                    Ok(s) => s,
-                })
-            }
+            DhAlgorithm::P256 => VisibleSecretKey::P256(p256::SecretKey::generate_from_rng(self)),
             DhAlgorithm::X25519 => {
                 VisibleSecretKey::X25519(x25519_dalek::StaticSecret::random_from_rng(self))
             }

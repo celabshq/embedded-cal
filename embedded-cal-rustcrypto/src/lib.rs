@@ -8,9 +8,12 @@ mod hmac;
 mod rng;
 
 use digest::Digest;
-use embedded_cal::{accessor::*, empty};
+use embedded_cal::accessor::*;
+#[cfg(any(feature = "standalone", test))]
+use embedded_cal::empty;
 
-pub type RustcryptoCal = RustcryptoCalExtender<empty::EmptyCal>;
+#[cfg(any(feature = "standalone", test))]
+pub type RustcryptoCal = RustcryptoCalExtender<embedded_cal_rand::WithSysRng<empty::EmptyCal>>;
 
 pub struct RustcryptoCalExtender<Base> {
     #[cfg(not(feature = "alloc"))]
@@ -19,9 +22,10 @@ pub struct RustcryptoCalExtender<Base> {
     base: Base,
 }
 
+#[cfg(any(feature = "standalone", test))]
 impl RustcryptoCal {
-    pub const fn new() -> Self {
-        Self::new_extending(empty::EmptyCal)
+    pub fn new() -> Self {
+        Self::new_extending(embedded_cal_rand::WithSysRng::new_from_sys(empty::EmptyCal))
     }
 }
 
@@ -53,13 +57,17 @@ impl<Base> RustcryptoCalExtender<Base> {
     }
 }
 
+#[cfg(any(feature = "standalone", test))]
 impl Default for RustcryptoCal {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<Base: embedded_cal::Cal> embedded_cal::Cal for RustcryptoCalExtender<Base> {
+impl<Base> embedded_cal::Cal for RustcryptoCalExtender<Base>
+where
+    Base: embedded_cal::Cal + rand_core::TryCryptoRng<Error = core::convert::Infallible>,
+{
     type DhProvider = Self;
     type AeadProvider = Self;
     type HashProvider = Self;
