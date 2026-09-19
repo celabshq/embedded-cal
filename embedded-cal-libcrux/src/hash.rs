@@ -267,34 +267,34 @@ mod tests {
 
     #[test]
     fn test_hash_algorithm_sha256() {
-        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_with_sys(EmptyCal));
+        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_from_sys(EmptyCal));
         testvectors::test_hash_algorithm_sha256(&mut cal);
     }
 
     #[test]
     fn test_hash_algorithm_sha3_224() {
-        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_with_sys(EmptyCal));
+        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_from_sys(EmptyCal));
 
         testvectors::sha3::test_hash_algorithm_sha3_224(&mut cal);
     }
 
     #[test]
     fn test_hash_algorithm_sha3_256() {
-        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_with_sys(EmptyCal));
+        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_from_sys(EmptyCal));
 
         testvectors::sha3::test_hash_algorithm_sha3_256(&mut cal);
     }
 
     #[test]
     fn test_hash_algorithm_sha3_384() {
-        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_with_sys(EmptyCal));
+        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_from_sys(EmptyCal));
 
         testvectors::sha3::test_hash_algorithm_sha3_384(&mut cal);
     }
 
     #[test]
     fn test_hash_algorithm_sha3_512() {
-        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_with_sys(EmptyCal));
+        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_from_sys(EmptyCal));
 
         testvectors::sha3::test_hash_algorithm_sha3_512(&mut cal);
     }

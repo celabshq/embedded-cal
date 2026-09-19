@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_dh_ecdh_p256() {
-        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_with_sys(EmptyCal));
+        let mut cal = Extender::<TestConfig>::new(WithSysRng::new_from_sys(EmptyCal));
 
         embedded_cal::test_dh_algorithm_ecdh_p256::<Extender<TestConfig>>();
         for v in testvectors::dh::RFC5903_P256 {

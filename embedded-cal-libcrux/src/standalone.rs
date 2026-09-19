@@ -15,6 +15,6 @@ impl Standalone {
     /// Creates a software-only cal, whose RNG functionality is backed by the system as chosen by
     /// `rand::make_rng::<rand::rngs::StdRng>()`.
     pub fn standalone() -> Self {
-        Self::new(embedded_cal_rand::WithSysRng::new_with_sys(EmptyCal))
+        Self::new(embedded_cal_rand::WithSysRng::new_from_sys(EmptyCal))
     }
 }
