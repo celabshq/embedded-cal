@@ -110,7 +110,7 @@ impl super::Nrf54l15Cal {
             header_buf[18 + aad_len..18 + aad_len + chunk.len()].copy_from_slice(chunk);
             aad_len += chunk.len();
         }
-        let b0 = embedded_cal::build_b0(nonce, message.len(), aad_len, TAG_LEN);
+        let b0 = embedded_cal::util::aesccm::build_b0(nonce, message.len(), aad_len, TAG_LEN);
         let header_data_len = if aad_len == 0 {
             header_buf[..16].copy_from_slice(&b0);
             16
@@ -191,7 +191,7 @@ impl super::Nrf54l15Cal {
             header_buf[18 + aad_len..18 + aad_len + chunk.len()].copy_from_slice(chunk);
             aad_len += chunk.len();
         }
-        let b0 = embedded_cal::build_b0(nonce, ciphertext.len(), aad_len, TAG_LEN);
+        let b0 = embedded_cal::util::aesccm::build_b0(nonce, ciphertext.len(), aad_len, TAG_LEN);
         let header_data_len = if aad_len == 0 {
             header_buf[..16].copy_from_slice(&b0);
             16

@@ -200,7 +200,10 @@ fn run_init_phase_256(
         w.set_npblb(0);
     });
 
-    write_ivr(aes, &embedded_cal::build_b0(nonce, msg_len, a_len, tag_len));
+    write_ivr(
+        aes,
+        &embedded_cal::util::aesccm::build_b0(nonce, msg_len, a_len, tag_len),
+    );
     write_key_256(aes, key);
 
     while !aes.sr().read().keyvalid() {}
@@ -232,7 +235,10 @@ fn run_init_phase_128(
         w.set_npblb(0); // clear stale NPBLB from any previous operation
     });
 
-    write_ivr(aes, &embedded_cal::build_b0(nonce, msg_len, a_len, tag_len));
+    write_ivr(
+        aes,
+        &embedded_cal::util::aesccm::build_b0(nonce, msg_len, a_len, tag_len),
+    );
     write_key_128(aes, key);
 
     while !aes.sr().read().keyvalid() {}
