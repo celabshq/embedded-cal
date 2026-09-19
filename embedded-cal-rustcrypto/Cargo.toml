@@ -46,5 +46,5 @@ embedded-cal-rand = { path = "../embedded-cal-rand", features = ["new_from_sys"]
 ## similar to a memory allocation failure, resulting in a panic.
 alloc = []
 
-## Enables the `RustcryptoCal::new()` constructor.
+## Enables the `Standalone::standalone()` constructor.
 standalone = ["embedded-cal-rand"]

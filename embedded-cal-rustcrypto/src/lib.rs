@@ -7,26 +7,20 @@ mod hash;
 mod hmac;
 mod rng;
 
-use digest::Digest;
-use embedded_cal::accessor::*;
 #[cfg(any(feature = "standalone", test))]
-use embedded_cal::empty;
+mod standalone;
 
 #[cfg(any(feature = "standalone", test))]
-pub type RustcryptoCal = RustcryptoCalExtender<embedded_cal_rand::WithSysRng<empty::EmptyCal>>;
+pub use standalone::Standalone;
+
+use digest::Digest;
+use embedded_cal::accessor::*;
 
 pub struct RustcryptoCalExtender<Base> {
     #[cfg(not(feature = "alloc"))]
     aead_buffer: [u8; 1024],
     _private: (),
     base: Base,
-}
-
-#[cfg(any(feature = "standalone", test))]
-impl RustcryptoCal {
-    pub fn new() -> Self {
-        Self::new_extending(embedded_cal_rand::WithSysRng::new_from_sys(empty::EmptyCal))
-    }
 }
 
 impl<Base> RustcryptoCalExtender<Base> {
@@ -54,13 +48,6 @@ impl<Base> RustcryptoCalExtender<Base> {
             }
             &self.aead_buffer[..cursor]
         }
-    }
-}
-
-#[cfg(any(feature = "standalone", test))]
-impl Default for RustcryptoCal {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -148,30 +135,30 @@ mod tests {
 
     #[test]
     fn test_hash_algorithm_sha256() {
-        let mut cal = RustcryptoCal::new();
+        let mut cal = Standalone::standalone();
 
-        embedded_cal::test_hash_algorithm_sha256::<HashAlgorithmOf<RustcryptoCal>>();
+        embedded_cal::test_hash_algorithm_sha256::<HashAlgorithmOf<Standalone>>();
         testvectors::test_hash_algorithm_sha256(&mut cal);
     }
 
     #[test]
     fn test_hmac_sha256() {
-        let mut cal = RustcryptoCal::new();
+        let mut cal = Standalone::standalone();
 
-        embedded_cal::test_hmac_algorithm_hmacsha256::<HmacAlgorithmOf<RustcryptoCal>>();
+        embedded_cal::test_hmac_algorithm_hmacsha256::<HmacAlgorithmOf<Standalone>>();
         testvectors::test_hmac_sha256(&mut cal);
     }
 
     #[test]
     fn test_hkdf_sha256() {
-        let mut cal = RustcryptoCal::new();
+        let mut cal = Standalone::standalone();
 
         testvectors::test_hkdf_sha256(&mut cal);
     }
 
     #[test]
     fn test_aead_aesccm_16_64_128() {
-        let mut cal = RustcryptoCal::new();
+        let mut cal = Standalone::standalone();
 
         testvectors::test_aead_aesccm_16_64_128(&mut cal);
     }
@@ -180,9 +167,9 @@ mod tests {
     fn test_dh() {
         use embedded_cal::DhAlgorithm;
 
-        let mut cal = RustcryptoCal::new();
+        let mut cal = Standalone::standalone();
 
-        embedded_cal::test_dh_algorithm_ecdh_p256::<RustcryptoCal>();
+        embedded_cal::test_dh_algorithm_ecdh_p256::<Standalone>();
 
         // For lack of loading, we only run a live test
 
@@ -203,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_aead_aesccm_16_64_256() {
-        let mut cal = RustcryptoCal::new();
+        let mut cal = Standalone::standalone();
 
         testvectors::test_aead_aesccm_16_64_256(&mut cal);
     }
