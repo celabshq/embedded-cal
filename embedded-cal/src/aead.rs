@@ -86,6 +86,7 @@ impl core::fmt::Display for DecryptionFailed {
 
 impl core::error::Error for DecryptionFailed {}
 
+/// An AEAD algorithm identifier.
 pub trait AeadAlgorithm: Sized + PartialEq + Eq + core::fmt::Debug + Clone {
     /// Length of a key in bytes.
     fn key_length(&self) -> usize;

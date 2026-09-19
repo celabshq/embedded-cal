@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
+//! Traits by which hardare primitives can be made available that are not in themselves high-level
+//! primitives.
+//!
+//! On the long run, this trait will be split for independent versioning, allowing the high-level
+//! traits to remain stable even when the underlying primitives need to be extended to support more
+//! exotic hardware constraints.
+
 pub mod ec;
 pub mod hash;
 
