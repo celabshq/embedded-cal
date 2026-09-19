@@ -146,6 +146,10 @@ pub use rng::test_tryrng;
 ///
 /// This module provides easy `{Interface}{Type}Of` style type aliases for various values of
 /// `Interface` and `Type`.
+///
+/// For example, [`AeadAlgorithmOf<C>`][accessor::AeadAlgorithmOf] is a shorthand way of writing
+/// `<<C as Cal>::AeadProvider as AeadProvider>::Algorithm`, which would often be required because
+/// associated type trait requirements are not automatically made available.
 pub mod accessor {
     use super::*;
 
