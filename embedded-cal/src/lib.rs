@@ -108,7 +108,6 @@
 #![no_std]
 
 pub mod empty;
-pub mod montgomery;
 pub mod util;
 
 mod aead;

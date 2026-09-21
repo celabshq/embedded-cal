@@ -235,7 +235,7 @@ impl EccVector {
             (self.bob_private, self.bob_public),
         ] {
             let mut scalar: [u8; 32] = private.try_into().expect("vector has a 32 byte scalar");
-            embedded_cal::montgomery::clamp_x25519(&mut scalar);
+            embedded_cal::util::montgomery::clamp_x25519(&mut scalar);
             let d = x25519
                 .import_scalar_bytes(&scalar)
                 .expect("test vector scalar rejected");
@@ -260,13 +260,13 @@ impl EccVector {
             (self.bob_private, self.alice_public),
         ] {
             let mut scalar: [u8; 32] = private.try_into().expect("vector has a 32 byte scalar");
-            embedded_cal::montgomery::clamp_x25519(&mut scalar);
+            embedded_cal::util::montgomery::clamp_x25519(&mut scalar);
             let d = x25519
                 .import_scalar_bytes(&scalar)
                 .expect("test vector scalar rejected");
 
             let mut peer_u: [u8; 32] = peer.try_into().expect("vector has a 32 byte u coordinate");
-            embedded_cal::montgomery::mask_u_x25519(&mut peer_u);
+            embedded_cal::util::montgomery::mask_u_x25519(&mut peer_u);
             let peer = montgomery_point(x25519, &peer_u);
 
             let shared = x25519.multiply_scalar_point(&d, &peer);
@@ -294,7 +294,7 @@ impl EccVector {
             (self.bob_private, self.bob_public),
         ] {
             let mut scalar: [u8; 56] = private.try_into().expect("vector has a 56 byte scalar");
-            embedded_cal::montgomery::clamp_x448(&mut scalar);
+            embedded_cal::util::montgomery::clamp_x448(&mut scalar);
             let d = x448
                 .import_scalar_bytes(&scalar)
                 .expect("test vector scalar rejected");
@@ -319,7 +319,7 @@ impl EccVector {
             (self.bob_private, self.alice_public),
         ] {
             let mut scalar: [u8; 56] = private.try_into().expect("vector has a 56 byte scalar");
-            embedded_cal::montgomery::clamp_x448(&mut scalar);
+            embedded_cal::util::montgomery::clamp_x448(&mut scalar);
             let d = x448
                 .import_scalar_bytes(&scalar)
                 .expect("test vector scalar rejected");

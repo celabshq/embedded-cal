@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
-use embedded_cal::montgomery::{clamp_x448, clamp_x25519, mask_u_x25519};
 use embedded_cal::plumbing::ec::{Ec, EcPrimitives};
+use embedded_cal::util::montgomery::{clamp_x448, clamp_x25519, mask_u_x25519};
 use embedded_cal::util::p256::{
     P256_GX_BYTES, P256_GY_BYTES, P256_ORDER, bytes_to_words, ge, p256_recover_y,
 };
