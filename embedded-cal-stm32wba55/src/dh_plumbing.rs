@@ -40,7 +40,7 @@ impl EcPrimitives<P256> for Stm32wba55Cal {
         &mut self,
         scalar: &[u8],
     ) -> Result<Self::Scalar, embedded_cal::ImportError> {
-        Ok(StmScalar(embedded_cal::p256::bytes_to_words(
+        Ok(StmScalar(embedded_cal::util::p256::bytes_to_words(
             scalar.try_into().map_err(|_| embedded_cal::ImportError)?,
         )))
     }
@@ -50,7 +50,7 @@ impl EcPrimitives<P256> for Stm32wba55Cal {
     }
 
     fn export_scalar_bytes<'s>(&mut self, scalar: &'s Self::Scalar) -> impl AsRef<[u8]> + use<'s> {
-        embedded_cal::p256::words_to_bytes(&scalar.0)
+        embedded_cal::util::p256::words_to_bytes(&scalar.0)
     }
 
     fn x_coord(&mut self, point: &Self::Point) -> Self::Scalar {

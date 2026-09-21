@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
+//! Traits describing EC (Elliptic Curve) primitives that can be hardware accelerated.
+
 pub trait Ec {
     /// The longest slice length ever usable with scalar import / export from any of the
     /// primitives.
