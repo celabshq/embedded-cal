@@ -23,7 +23,7 @@ check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcr
 standalone = ["embedded-cal-rand"]
 
 [dependencies]
-embedded-cal.path = "../embedded-cal"
+embedded-cal.workspace = true
 libcrux-iot-aes = { git = "https://github.com/celabshq/libcrux-iot", branch = "embedded-cal" }
 libcrux-iot-sha3 = { git = "https://github.com/celabshq/libcrux-iot.git", branch = "embedded-cal" }
 libcrux-iot-p256 = { git = "https://github.com/celabshq/libcrux-iot.git", branch = "embedded-cal", features = ["expose-hacl"] }
