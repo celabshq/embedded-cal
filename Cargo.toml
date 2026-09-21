@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
 [workspace]
-members = ["embedded-cal", "embedded-cal-rustcrypto", "embedded-cal-software-demo", "embedded-cal-nrf54l15", "embedded-cal-stm32wba55", "testvectors", "embedded-cal-libcrux"]
+members = ["embedded-cal", "embedded-cal-rustcrypto", "embedded-cal-software-demo", "embedded-cal-nrf54l15", "embedded-cal-stm32wba55", "testvectors", "embedded-cal-libcrux", "embedded-cal-rand"]
 default-members = ["embedded-cal", "embedded-cal-rustcrypto", "embedded-cal-libcrux", "embedded-cal-software-demo", "testvectors"]
 resolver = "3"
 
@@ -18,3 +18,8 @@ version = "0.1.0"
 [workspace.dependencies]
 hax-lib.git = "https://github.com/hacspec/hax"
 rand_core = { version = "0.10", default-features = false }
+
+[patch.crates-io]
+# patch until libcrux-secrets 0.0.6 is released
+# we need the patch here to patch the secrets version used by libcrux-iot-sha3 and libcrux-iot-aes
+libcrux-secrets = { git = "https://github.com/celabshq/libcrux.git", rev = "10a65cfa9175e8f78198f24ba450c17090622945" }

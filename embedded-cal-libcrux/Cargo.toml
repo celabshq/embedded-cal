@@ -11,12 +11,30 @@ keywords.workspace = true
 categories.workspace = true
 version.workspace = true
 
+[features]
+# The check-secret-independence feature can be used as a lightweight check that secrets are not used
+# in a way that depends on their values. This is achieved with the https://docs.rs/libcrux-secrets crate
+# which provides type-aliases that either point to the normal rust integers, or to specially restricted
+# new-types if the feature is enabled. This feature should only be activated locally or in CI to check
+# for secret independence, and not when depending on the embedded-cal-libcrux crate.
+check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-iot-sha3/check-secret-independence"]
+
+## Enables the `Extender::standalone()` constructor.
+standalone = ["embedded-cal-rand"]
+
 [dependencies]
 embedded-cal.path = "../embedded-cal"
+libcrux-iot-aes = { git = "https://github.com/celabshq/libcrux-iot", branch = "embedded-cal" }
+libcrux-iot-sha3 = { git = "https://github.com/celabshq/libcrux-iot.git", branch = "embedded-cal" }
+libcrux-iot-p256 = { git = "https://github.com/celabshq/libcrux-iot.git", branch = "embedded-cal", features = ["expose-hacl"] }
+libcrux-secrets = { version = "0.0.5" }
 libcrux-sha2 = "0.0.7"
-libcrux-aesgcm = "0.0.8"
 libcrux-traits = { version = "0.0.7", features = ["error-in-core"] }
-rand_core = "0.10"
+
+rand_core.workspace = true
+
+embedded-cal-rand = { path = "../embedded-cal-rand", features = ["new_from_sys"], optional = true }
 
 [dev-dependencies]
 testvectors.path = "../testvectors"
+embedded-cal-rand = { path = "../embedded-cal-rand", features = ["new_from_sys"] }

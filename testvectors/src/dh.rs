@@ -20,33 +20,12 @@ impl EccVector {
     /// Panics if either the algorithm is not supported, or either direction of running DH does not
     /// result in the expected shared secret.
     pub fn test_with<C: embedded_cal::Cal>(&self, cal: &mut C) {
-        use embedded_cal::{DhAlgorithm, DhProvider};
+        use embedded_cal::DhProvider;
 
         let cal = cal.dh();
 
-        let alg = <C::DhProvider as DhProvider>::Algorithm::from_cose_ecdh(self.ecdh_curve)
-            .expect("algorithm not supported by CAL");
-        let alice_private = cal
-            .import_secretkey_bytes(alg.clone(), self.alice_private)
-            .expect("failed to load Alice's secret key")
-            .into();
-        let alice_public = cal.public_key(&alice_private);
-        let bob_private = cal
-            .import_secretkey_bytes(alg, self.bob_private)
-            .expect("failed to load Bob's secret key")
-            .into();
-        let bob_public = cal.public_key(&bob_private);
-
-        assert_eq!(
-            cal.export_publickey_bytes(&alice_public).as_ref(),
-            self.alice_public,
-            "Alice's public key not exported as expected"
-        );
-        assert_eq!(
-            cal.export_publickey_bytes(&bob_public).as_ref(),
-            self.bob_public,
-            "Bob's public key not exported as expected"
-        );
+        let (alice_private, alice_public) = self.test_key_import_export("Alice", cal);
+        let (bob_private, bob_public) = self.test_key_import_export("Bob", cal);
 
         let shared_ab = cal
             .shared_secret(&alice_private, &bob_public)
@@ -62,6 +41,68 @@ impl EccVector {
             cal.raw_secret_bytes(&shared_ba).as_ref(),
             self.shared_secret
         );
+    }
+
+    /// Test key import/export functionality of [`embedded_cal::DhProvider`].
+    ///
+    /// `name` must be either `Alice` or `Bob`.
+    fn test_key_import_export<C: embedded_cal::DhProvider>(
+        &self,
+        name: &'static str,
+        cal: &mut C,
+    ) -> (C::SecretKey, C::PublicKey) {
+        use embedded_cal::DhAlgorithm;
+        let alg =
+            C::Algorithm::from_cose_ecdh(self.ecdh_curve).expect("algorithm not supported by CAL");
+
+        let (private_bytes, public_bytes) = match name {
+            "Alice" => (self.alice_private, self.alice_public),
+            "Bob" => (self.bob_private, self.bob_public),
+            _ => panic!("name must be Alice or Bob"),
+        };
+
+        let private_visible = cal
+            .import_secretkey_bytes(alg.clone(), private_bytes)
+            .unwrap_or_else(|_| panic!("failed to load {name}'s secret key"));
+
+        // We cannot test export(import(x)) == x, because some implementations clamp on import
+        // (the nRF54L15 back-end pre-clamps X25519 and X448 scalars as in RFC7748's decodeScalar),
+        // and that operation loses information.
+        // Instead we are testing the idempotence export(import(export(import(x)))) == export(import(x)).
+        //
+        // The scope keeps `exported`'s borrow of `private_visible` from outliving the check;
+        // the returned `impl AsRef<[u8]>` may have a destructor, so NLL cannot end it early.
+        {
+            let exported = cal.export_secretkey_bytes(&private_visible);
+            let reimported = cal
+                .import_secretkey_bytes(alg.clone(), exported.as_ref())
+                .unwrap_or_else(|_| panic!("failed to re-import {name}'s exported secret key"));
+            assert_eq!(
+                cal.export_secretkey_bytes(&reimported).as_ref(),
+                exported.as_ref(),
+                "{name}'s secret key did not round-trip through export/import"
+            );
+        }
+
+        let private = private_visible.into();
+        let public = cal.public_key(&private);
+
+        assert_eq!(
+            cal.export_publickey_bytes(&public).as_ref(),
+            public_bytes,
+            "{name}'s public key not exported as expected"
+        );
+
+        let public_imported = cal
+            .import_publickey_bytes(alg.clone(), public_bytes)
+            .unwrap_or_else(|_| panic!("failed to import {name}'s public key"));
+        assert_eq!(
+            cal.export_publickey_bytes(&public_imported).as_ref(),
+            public_bytes,
+            "{name}'s public key did not round-trip through import/export"
+        );
+
+        (private, public)
     }
 }
 
@@ -298,10 +339,10 @@ impl EccVector {
 /// Builds the P-256 generator as a plumbing point.
 fn base_point_p256<P: EcPrimitives<P256>>(p256: &mut P) -> P::Point {
     let x = p256
-        .import_scalar_bytes(&embedded_cal::p256::P256_GX_BYTES)
+        .import_scalar_bytes(&embedded_cal::util::p256::P256_GX_BYTES)
         .expect("generator x is a valid scalar");
     let y = p256
-        .import_scalar_bytes(&embedded_cal::p256::P256_GY_BYTES)
+        .import_scalar_bytes(&embedded_cal::util::p256::P256_GY_BYTES)
         .expect("generator y is a valid scalar");
     p256.point(x, y)
 }
@@ -309,7 +350,7 @@ fn base_point_p256<P: EcPrimitives<P256>>(p256: &mut P) -> P::Point {
 /// Builds a P-256 point from its compact (x-only) representation.
 fn point_from_compact_p256<P: EcPrimitives<P256>>(p256: &mut P, x: &[u8]) -> P::Point {
     let x: &[u8; 32] = x.try_into().expect("vector has a 32 byte x coordinate");
-    let y = embedded_cal::p256::p256_recover_y(x).expect("vector point is on the curve");
+    let y = embedded_cal::util::p256::p256_recover_y(x).expect("vector point is on the curve");
     let x = p256
         .import_scalar_bytes(x)
         .expect("test vector coordinate rejected");
