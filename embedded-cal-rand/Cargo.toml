@@ -12,7 +12,7 @@ categories.workspace = true
 version.workspace = true
 
 [dependencies]
-embedded-cal.path = "../embedded-cal"
+embedded-cal.workspace = true
 
 rand_core.workspace = true
 

@@ -18,6 +18,7 @@ version = "0.1.0"
 [workspace.dependencies]
 hax-lib = "0.4.0"
 rand_core = { version = "0.10", default-features = false }
+embedded-cal = { version = "0.1.0", path = "./embedded-cal" }
 
 [patch.crates-io]
 # patch until libcrux-secrets 0.0.6 is released

@@ -444,7 +444,7 @@ dependencies = [
 name = "embedded-cal"
 version = "0.1.0"
 dependencies = [
- "hax-lib 0.3.5",
+ "hax-lib 0.4.0",
  "rand_core 0.10.1",
 ]
 
@@ -662,16 +662,6 @@ checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 
 [[package]]
 name = "hax-lib"
-version = "0.3.5"
-source = "git+https://github.com/hacspec/hax#bf9a7e4b6a24aebf015910d62477103d010fd643"
-dependencies = [
- "hax-lib-macros 0.3.5",
- "num-bigint",
- "num-traits",
-]
-
-[[package]]
-name = "hax-lib"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "543f93241d32b3f00569201bfce9d7a93c92c6421b23c77864ac929dc947b9fc"
@@ -682,15 +672,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "hax-lib-macros"
-version = "0.3.5"
-source = "git+https://github.com/hacspec/hax#bf9a7e4b6a24aebf015910d62477103d010fd643"
+name = "hax-lib"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e14b91f3c959e69795166fb5b61e46c6c41f32e6627443a329618c01fb2798b1"
 dependencies = [
- "hax-lib-macros-types 0.3.5",
- "proc-macro-error2",
- "proc-macro2",
- "quote",
- "syn",
+ "hax-lib-macros 0.4.0",
+ "num-bigint",
+ "num-traits",
 ]
 
 [[package]]
@@ -707,9 +696,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "hax-lib-macros"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "914ab66e650cd1b2109185e7175e1407754efafda5da5fff854fb7473e376f48"
+dependencies = [
+ "hax-lib-macros-types 0.4.0",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "hax-lib-macros-types"
-version = "0.3.5"
-source = "git+https://github.com/hacspec/hax#bf9a7e4b6a24aebf015910d62477103d010fd643"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f177c9ae8ea456e2f71ff3c1ea47bf4464f772a05133fcbba56cd5ba169035a2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -720,9 +722,9 @@ dependencies = [
 
 [[package]]
 name = "hax-lib-macros-types"
-version = "0.3.6"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f177c9ae8ea456e2f71ff3c1ea47bf4464f772a05133fcbba56cd5ba169035a2"
+checksum = "4eb1a610adbc947efc77adb73875320fef6f5f134ea88dcef5fdd02d62294159"
 dependencies = [
  "proc-macro2",
  "quote",
