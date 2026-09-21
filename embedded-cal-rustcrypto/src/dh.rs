@@ -4,7 +4,10 @@
 use super::*;
 use embedded_cal::{Cal, DhProvider, ImportError, util::Either};
 
-impl<Base: Cal> DhProvider for RustcryptoCalExtender<Base> {
+impl<Base> DhProvider for RustcryptoCalExtender<Base>
+where
+    Base: Cal + rand_core::TryCryptoRng<Error = core::convert::Infallible>,
+{
     type Algorithm = DhAlgorithm<DhAlgorithmOf<Base>>;
     type VisibleSecretKey = VisibleSecretKey<DhVisibleSecretKeyOf<Base>>;
     type SecretKey = SecretKey<DhSecretKeyOf<Base>>;
@@ -13,10 +16,11 @@ impl<Base: Cal> DhProvider for RustcryptoCalExtender<Base> {
 
     fn generate_visible(&mut self, alg: Self::Algorithm) -> Self::VisibleSecretKey {
         // We're not wrapping anything, so no point in deferring to the self RNG.
+        use p256::elliptic_curve::Generate;
         match alg {
-            DhAlgorithm::P256 => VisibleSecretKey::P256(p256::SecretKey::random(&mut OldRng(self))),
+            DhAlgorithm::P256 => VisibleSecretKey::P256(p256::SecretKey::generate_from_rng(self)),
             DhAlgorithm::X25519 => {
-                VisibleSecretKey::X25519(x25519_dalek::StaticSecret::random_from_rng(OldRng(self)))
+                VisibleSecretKey::X25519(x25519_dalek::StaticSecret::random_from_rng(self))
             }
             DhAlgorithm::Direct(d) => VisibleSecretKey::Direct(self.base.dh().generate_visible(d)),
         }
@@ -110,11 +114,11 @@ impl<Base: Cal> DhProvider for RustcryptoCalExtender<Base> {
         &mut self,
         public: &'p Self::PublicKey,
     ) -> impl AsRef<[u8]> + use<'p, Base> {
-        use p256::elliptic_curve::sec1::ToEncodedPoint;
+        use p256::elliptic_curve::sec1::ToSec1Point;
         match public {
             PublicKey::P256(public_key) => Either::Own(
                 *public_key
-                    .to_encoded_point(false)
+                    .to_sec1_point(false)
                     .x()
                     .unwrap()
                     .as_array()
@@ -227,26 +231,4 @@ pub enum PublicKey<BPK> {
 pub enum SharedSecret<BSS> {
     Length32([u8; 32]),
     Direct(BSS),
-}
-
-struct OldRng<'c, C: embedded_cal::Cal>(&'c mut C);
-
-impl<'c, C: embedded_cal::Cal + rand_core::CryptoRng> rand_core_06::CryptoRng for OldRng<'c, C> {}
-impl<'c, C: embedded_cal::Cal + rand_core::CryptoRng> rand_core_06::RngCore for OldRng<'c, C> {
-    fn next_u32(&mut self) -> u32 {
-        self.0.next_u32()
-    }
-
-    fn next_u64(&mut self) -> u64 {
-        self.0.next_u64()
-    }
-
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        self.0.fill_bytes(dest)
-    }
-
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core_06::Error> {
-        self.0.fill_bytes(dest);
-        Ok(())
-    }
 }
