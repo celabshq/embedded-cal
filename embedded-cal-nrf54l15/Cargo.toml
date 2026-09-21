@@ -22,7 +22,7 @@ name = "integration"
 harness = false
 
 [dependencies]
-embedded-cal.path = "../embedded-cal"
+embedded-cal.workspace = true
 nrf-pac = { version = "0.2.0", features = ["nrf54l15-app", "rt"] }
 rand_core.workspace = true
 zeroize = { version = "1.8.2", default-features = false, features = ["derive"]}

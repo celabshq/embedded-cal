@@ -4,6 +4,10 @@
 //! Implementations of the various traits of embedded-cal that implemnt the empty set of
 //! algorithms.
 //!
+//! This is useful as a base type: Many layers work as extenders, and thus need a terminator type
+//! somewhere at the base of the composite type. In addition, it can be used to simplify code for
+//! hardware implementations.
+//!
 //! The types are ZST or uninhabited as suitable for the type.
 
 use super::*;
