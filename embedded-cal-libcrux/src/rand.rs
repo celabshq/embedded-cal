@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
+use embedded_cal::plumbing::ec::{EcPrimitives, P256};
+
 use crate::{Extender, ExtenderConfig};
 
 // FIXME: This implementation is based on the one in embedded-cal-rustcrypto and intended for
 //  testing purposes for now.
 /// An implementation based on `getrandom`.
-///
 // FIXME: We should probably have some fast CSPRNG in self that is just seeded from getrandom.
-impl<EC: ExtenderConfig> rand_core::TryCryptoRng for Extender<EC> {}
+impl<EC: ExtenderConfig, C: EcPrimitives<P256>> rand_core::TryCryptoRng for Extender<EC, C> {}
 
-impl<EC: ExtenderConfig> rand_core::TryRng for Extender<EC> {
+impl<EC: ExtenderConfig, C: EcPrimitives<P256>> rand_core::TryRng for Extender<EC, C> {
     type Error = core::convert::Infallible;
 
     fn try_next_u32(&mut self) -> Result<u32, Self::Error> {

@@ -45,7 +45,7 @@ impl<EC: ExtenderConfig> Clone for HashState<EC> {
     }
 }
 
-impl<EC: ExtenderConfig> HashProvider for Extender<EC> {
+impl<EC: ExtenderConfig, C: EcPrimitives<P256>> HashProvider for Extender<EC, C> {
     type Algorithm = HashAlgorithm<EC>;
     type State = HashState<EC>;
     type Output = HashResult<EC>;
@@ -257,6 +257,7 @@ mod tests {
     use super::*;
 
     struct TestConfig;
+    use libcrux_iot_p256::embedded_cal_integration::LibcruxEc;
 
     impl ExtenderConfig for TestConfig {
         type Base = embedded_cal::empty::EmptyCal;
@@ -264,31 +265,36 @@ mod tests {
 
     #[test]
     fn test_hash_algorithm_sha256() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut cal =
+            Extender::<TestConfig, LibcruxEc>::new(embedded_cal::empty::EmptyCal, LibcruxEc);
         testvectors::test_hash_algorithm_sha256(&mut cal);
     }
 
     #[test]
     fn test_hash_algorithm_sha3_224() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut cal =
+            Extender::<TestConfig, LibcruxEc>::new(embedded_cal::empty::EmptyCal, LibcruxEc);
         testvectors::sha3::test_hash_algorithm_sha3_224(&mut cal);
     }
 
     #[test]
     fn test_hash_algorithm_sha3_256() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut cal =
+            Extender::<TestConfig, LibcruxEc>::new(embedded_cal::empty::EmptyCal, LibcruxEc);
         testvectors::sha3::test_hash_algorithm_sha3_256(&mut cal);
     }
 
     #[test]
     fn test_hash_algorithm_sha3_384() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut cal =
+            Extender::<TestConfig, LibcruxEc>::new(embedded_cal::empty::EmptyCal, LibcruxEc);
         testvectors::sha3::test_hash_algorithm_sha3_384(&mut cal);
     }
 
     #[test]
     fn test_hash_algorithm_sha3_512() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut cal =
+            Extender::<TestConfig, LibcruxEc>::new(embedded_cal::empty::EmptyCal, LibcruxEc);
         testvectors::sha3::test_hash_algorithm_sha3_512(&mut cal);
     }
 }

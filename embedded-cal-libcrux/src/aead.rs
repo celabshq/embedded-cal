@@ -72,7 +72,7 @@ fn flatten<T: AadGenerator>(generator: &T) -> AadAdapter<'_, impl Iterator<Item 
     }
 }
 
-impl<EC: ExtenderConfig> AeadProvider for Extender<EC> {
+impl<EC: ExtenderConfig, C: EcPrimitives<P256>> AeadProvider for Extender<EC, C> {
     type Algorithm = AeadAlgorithm<EC>;
     type Key = Key<EC>;
     type Tag = Tag<EC>;
@@ -296,6 +296,8 @@ impl<EC: ExtenderConfig> AsRef<[u8]> for Tag<EC> {
 
 #[cfg(test)]
 mod tests {
+    use libcrux_iot_p256::embedded_cal_integration::LibcruxEc;
+
     use crate::{Extender, ExtenderConfig};
 
     struct TestConfig;
@@ -306,13 +308,15 @@ mod tests {
 
     #[test]
     fn test_aes_gcm_128_encrypt_decrypt() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut cal =
+            Extender::<TestConfig, LibcruxEc>::new(embedded_cal::empty::EmptyCal, LibcruxEc);
         testvectors::test_aead_aesgcm_128(&mut cal);
     }
 
     #[test]
     fn test_aes_gcm_256_encrypt_decrypt() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+        let mut cal =
+            Extender::<TestConfig, LibcruxEc>::new(embedded_cal::empty::EmptyCal, LibcruxEc);
         testvectors::test_aead_aesgcm_256(&mut cal);
     }
 }

@@ -26,7 +26,14 @@
 //! [U8]: https://docs.rs/libcrux-secrets/latest/libcrux_secrets/fn.U8.html
 #![no_std]
 
-use embedded_cal::{Cal, accessor::*, plumbing::Plumbing};
+use embedded_cal::{
+    Cal,
+    accessor::*,
+    plumbing::{
+        Plumbing,
+        ec::{EcPrimitives, P256},
+    },
+};
 use libcrux_sha2::Digest;
 
 mod aead;
@@ -44,15 +51,15 @@ pub trait ExtenderConfig {
     type Base: Cal + Plumbing;
 }
 
-pub struct Extender<EC: ExtenderConfig>(EC::Base);
+pub struct Extender<EC: ExtenderConfig, C: EcPrimitives<P256>>(EC::Base, C);
 
-impl<EC: ExtenderConfig> Extender<EC> {
-    pub fn new(base: EC::Base) -> Self {
-        Self(base)
+impl<EC: ExtenderConfig, C: EcPrimitives<P256>> Extender<EC, C> {
+    pub fn new(base: EC::Base, p256: C) -> Self {
+        Self(base, p256)
     }
 }
 
-impl<EC: ExtenderConfig> Cal for Extender<EC> {
+impl<EC: ExtenderConfig, C: EcPrimitives<P256>> Cal for Extender<EC, C> {
     type DhProvider = Self;
     type AeadProvider = Self;
     type HashProvider = Self;

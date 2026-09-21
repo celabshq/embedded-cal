@@ -6,6 +6,7 @@ use embedded_cal::{
     accessor::{
         DhAlgorithmOf, DhPublicKeyOf, DhSecretKeyOf, DhSharedSecretOf, DhVisibleSecretKeyOf,
     },
+    plumbing::ec::{EcPrimitives, P256 as P256Ec},
     util::Either,
 };
 use libcrux_iot_p256::{
@@ -80,7 +81,7 @@ pub enum SharedSecret<BSS> {
     Direct(BSS),
 }
 
-impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
+impl<EC: ExtenderConfig, C: EcPrimitives<P256Ec>> DhProvider for Extender<EC, C> {
     type Algorithm = DhAlgorithm<DhAlgorithmOf<EC::Base>>;
 
     type VisibleSecretKey = VisibleSecretKey<DhVisibleSecretKeyOf<EC::Base>>;
@@ -112,7 +113,7 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
     fn export_secretkey_bytes<'s>(
         &mut self,
         secretkey: &'s Self::VisibleSecretKey,
-    ) -> impl AsRef<[u8]> + use<'s, EC> {
+    ) -> impl AsRef<[u8]> + use<'s, EC, C> {
         match secretkey {
             VisibleSecretKey::P256(secret) => Either::Own(secret.0.declassify_ref()),
             VisibleSecretKey::Direct(d) => Either::Direct(self.0.dh().export_secretkey_bytes(d)),
@@ -144,7 +145,7 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
     fn export_publickey_bytes<'p>(
         &mut self,
         public: &'p Self::PublicKey,
-    ) -> impl AsRef<[u8]> + use<'p, EC> {
+    ) -> impl AsRef<[u8]> + use<'p, EC, C> {
         match public {
             // Return compact encoding of pk, i.e. just the x coordinate
             PublicKey::P256(pk_bytes) => Either::Own(pk_bytes.x()),
@@ -199,18 +200,21 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
     ) -> Result<Self::SharedSecret, embedded_cal::IncompatibleKeys> {
         match (private, public) {
             (SecretKey::P256(secret), PublicKey::P256(public)) => {
-                // FIXME: This feels somewhat like an abuse of the IncompatibleKeys error. P256::derive_ecdh should only
-                //  return an error if the keys are invalid, which should be impossible by construction. But the alternative
-                // is using an unreachable! here, which would crash the process if that "should be impossible" is wrong.
-                let point: [U8; 64] = P256::derive_ecdh(&public.0, &secret.0)
-                    .map_err(|_| embedded_cal::IncompatibleKeys)?;
+                let mut point = [0u8; 64];
+                libcrux_iot_p256::embedded_cal_integration::dh_responder_ec(
+                    &mut self.1,
+                    &mut point,
+                    &public.0,
+                    secret.0.declassify_ref(),
+                )
+                .ok_or(embedded_cal::IncompatibleKeys)?;
                 // P256::derive_ecdh returns the affine point of secret * public in big-endian format concatenated as x||y
                 // However, the ECDH shared secret should only be the x coordinate.
                 const { assert!(P256_SHARED_SECRET_LEN <= 64) };
                 let shared_secret = point
                     .first_chunk()
                     .expect("shared_secret has len 32 <= point len 64");
-                Ok(SharedSecret::P256(*shared_secret))
+                Ok(SharedSecret::P256(*shared_secret.classify_ref()))
             }
             (SecretKey::Direct(secret), PublicKey::Direct(public)) => self
                 .0
@@ -235,7 +239,7 @@ impl<EC: ExtenderConfig> DhProvider for Extender<EC> {
     fn raw_secret_bytes<'s>(
         &mut self,
         secret: &'s Self::SharedSecret,
-    ) -> impl AsRef<[u8]> + use<'s, EC> {
+    ) -> impl AsRef<[u8]> + use<'s, EC, C> {
         match secret {
             SharedSecret::P256(secret) => Either::Own(secret.declassify_ref()),
             SharedSecret::Direct(secret) => Either::Direct(self.0.dh().raw_secret_bytes(secret)),
@@ -268,10 +272,47 @@ mod tests {
     }
 
     #[test]
-    fn test_dh_ecdh_p256() {
-        let mut cal = Extender::<TestConfig>::new(embedded_cal::empty::EmptyCal);
+    fn test_dh_ecdh_p256_libcrux() {
+        use libcrux_iot_p256::embedded_cal_integration::LibcruxEc;
 
-        embedded_cal::test_dh_algorithm_ecdh_p256::<Extender<TestConfig>>();
+        let mut cal =
+            Extender::<TestConfig, LibcruxEc>::new(embedded_cal::empty::EmptyCal, LibcruxEc);
+
+        embedded_cal::test_dh_algorithm_ecdh_p256::<Extender<TestConfig, LibcruxEc>>();
+        for v in testvectors::dh::RFC5903_P256 {
+            v.test_with(cal.dh());
+        }
+    }
+
+    #[test]
+    fn test_dh_ecdh_p256_nrf54l15() {
+        use embedded_cal_nrf54l15::Nrf54l15Cal;
+        let nrf54l15cal = Nrf54l15Cal::new(nrf_pac::CRACEN_S, nrf_pac::CRACENCORE_S);
+
+        let mut cal =
+            Extender::<TestConfig, Nrf54l15Cal>::new(embedded_cal::empty::EmptyCal, nrf54l15cal);
+
+        embedded_cal::test_dh_algorithm_ecdh_p256::<Extender<TestConfig, Nrf54l15Cal>>();
+        for v in testvectors::dh::RFC5903_P256 {
+            v.test_with(cal.dh());
+        }
+    }
+    #[test]
+    fn test_dh_ecdh_p256_stm32wba55() {
+        use embedded_cal_stm32wba55::Stm32wba55Cal;
+        let stm32wba55cal = Stm32wba55Cal::new(
+            stm32_metapac::HASH,
+            stm32_metapac::RCC,
+            stm32_metapac::RNG,
+            stm32_metapac::AES,
+            stm32_metapac::PKA,
+        );
+        let mut cal = Extender::<TestConfig, Stm32wba55Cal>::new(
+            embedded_cal::empty::EmptyCal,
+            stm32wba55cal,
+        );
+
+        embedded_cal::test_dh_algorithm_ecdh_p256::<Extender<TestConfig, Stm32wba55Cal>>();
         for v in testvectors::dh::RFC5903_P256 {
             v.test_with(cal.dh());
         }
