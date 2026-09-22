@@ -17,15 +17,18 @@ version.workspace = true
 # which provides type-aliases that either point to the normal rust integers, or to specially restricted
 # new-types if the feature is enabled. This feature should only be activated locally or in CI to check
 # for secret independence, and not when depending on the embedded-cal-libcrux crate.
-check-secret-independence = ["libcrux-secrets/check-secret-independence", "libcrux-iot-sha3/check-secret-independence"]
+check-secret-independence = [
+    "libcrux-secrets/check-secret-independence",
+    "libcrux-iot-sha3/check-secret-independence",
+]
 
 [dependencies]
 embedded-cal.path = "../embedded-cal"
-libcrux-iot-aes = { git = "https://github.com/celabshq/libcrux-iot", branch = "embedded-cal" }
-libcrux-iot-sha3 = { git = "https://github.com/celabshq/libcrux-iot.git", branch = "embedded-cal" }
-libcrux-secrets = { version = "0.0.5" }
-libcrux-sha2 = "0.0.7"
-libcrux-traits = { version = "0.0.7", features = ["error-in-core"] }
+libcrux-iot-aes = "0.0.1-alpha.1"
+libcrux-iot-sha3 = "0.0.1-alpha.1"
+libcrux-secrets = { version = "0.0.6" }
+libcrux-sha2 = "0.0.8"
+libcrux-traits = { version = "0.0.8", features = ["error-in-core"] }
 rand_core = "0.10"
 
 [dev-dependencies]
