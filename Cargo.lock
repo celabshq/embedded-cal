@@ -491,20 +491,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "embedded-cal"
-version = "0.2.0-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2d77a40928916e0ed5a222976c9b229e5f37371a9d8ca073a7341cdd2d20894"
-dependencies = [
- "hax-lib 0.4.0",
- "rand_core",
-]
-
-[[package]]
 name = "embedded-cal-libcrux"
 version = "0.2.0-alpha.1"
 dependencies = [
- "embedded-cal 0.2.0-alpha.1",
+ "embedded-cal",
  "embedded-cal-rand",
  "libcrux-iot-aes",
  "libcrux-iot-p256",
@@ -526,7 +516,7 @@ dependencies = [
  "defmt-rtt",
  "defmt-test",
  "embedded-alloc",
- "embedded-cal 0.2.0-alpha.1",
+ "embedded-cal",
  "embedded-cal-software-demo",
  "libcrux-iot-p256",
  "nrf-pac",
@@ -540,7 +530,7 @@ dependencies = [
 name = "embedded-cal-rand"
 version = "0.2.0-alpha.1"
 dependencies = [
- "embedded-cal 0.2.0-alpha.1",
+ "embedded-cal",
  "rand",
  "rand_core",
 ]
@@ -552,7 +542,7 @@ dependencies = [
  "aes",
  "ccm",
  "digest",
- "embedded-cal 0.2.0-alpha.1",
+ "embedded-cal",
  "embedded-cal-rand",
  "generic-array",
  "heapless",
@@ -569,7 +559,7 @@ dependencies = [
 name = "embedded-cal-software-demo"
 version = "0.2.0-alpha.1"
 dependencies = [
- "embedded-cal 0.2.0-alpha.1",
+ "embedded-cal",
  "rand_core",
  "testvectors",
 ]
@@ -584,7 +574,7 @@ dependencies = [
  "defmt-rtt",
  "defmt-test",
  "embedded-alloc",
- "embedded-cal 0.2.0-alpha.1",
+ "embedded-cal",
  "embedded-cal-software-demo",
  "libcrux-iot-p256",
  "panic-probe",
@@ -889,7 +879,7 @@ version = "0.0.1-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fca6d049fb4e824bc808b2e0caa7e411155a8bcedd3cc60b61a7c6702790b00"
 dependencies = [
- "embedded-cal 0.2.0-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "embedded-cal",
  "libcrux-hacl-rs",
  "libcrux-macros",
  "libcrux-secrets",
@@ -1409,7 +1399,7 @@ dependencies = [
 name = "testvectors"
 version = "0.2.0-alpha.1"
 dependencies = [
- "embedded-cal 0.2.0-alpha.1",
+ "embedded-cal",
  "hexlit",
 ]
 

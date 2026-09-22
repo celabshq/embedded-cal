@@ -49,3 +49,6 @@ embedded-cal-rand = { version = "0.2.0-alpha.1", path = "./embedded-cal-rand" }
 
 [workspace.metadata.release]
 sign-tag = true
+
+[patch.crates-io]
+embedded-cal = { path = "./embedded-cal" }
