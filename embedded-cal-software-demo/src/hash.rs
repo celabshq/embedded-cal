@@ -188,7 +188,7 @@ impl<EC: ExtenderConfig> embedded_cal::HashAlgorithm for HashAlgorithm<EC> {
         const {
             assert!(
                 EC::IMPLEMENT_SHA2SHORT
-                    >= <EC::Base as Sha2Short>::SUPPORTED | EC::IMPLEMENT_SHA2SHORT_PLUMBING
+                    <= <EC::Base as Sha2Short>::SUPPORTED | EC::IMPLEMENT_SHA2SHORT_PLUMBING
             )
         };
 
