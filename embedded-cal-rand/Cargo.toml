@@ -3,9 +3,10 @@
 
 [package]
 name = "embedded-cal-rand"
+description = "Making a cryptographically secure random number generator accessible in embedded-cal"
+
 edition.workspace = true
 license.workspace = true
-readme.workspace = true
 repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
