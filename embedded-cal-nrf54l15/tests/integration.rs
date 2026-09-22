@@ -108,7 +108,7 @@ mod tests {
     #[test]
     fn test_ec_plumbing_p256(state: &mut super::TestState) {
         for v in testvectors::dh::RFC5903_P256 {
-            v.test_plumbing_x25519(state.cal.as_mut().unwrap());
+            v.test_plumbing_p256(state.cal.as_mut().unwrap());
         }
     }
 
