@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
+use embedded_cal::plumbing::ec::{Curve, Ec, EcPrimitives, P256, X448, X25519};
 use hexlit::hex;
 
 pub struct EccVector {
@@ -19,33 +20,12 @@ impl EccVector {
     /// Panics if either the algorithm is not supported, or either direction of running DH does not
     /// result in the expected shared secret.
     pub fn test_with<C: embedded_cal::Cal>(&self, cal: &mut C) {
-        use embedded_cal::{DhAlgorithm, DhProvider};
+        use embedded_cal::DhProvider;
 
         let cal = cal.dh();
 
-        let alg = <C::DhProvider as DhProvider>::Algorithm::from_cose_ecdh(self.ecdh_curve)
-            .expect("algorithm not supported by CAL");
-        let alice_private = cal
-            .import_secretkey_bytes(alg.clone(), self.alice_private)
-            .expect("failed to load Alice's secret key")
-            .into();
-        let alice_public = cal.public_key(&alice_private);
-        let bob_private = cal
-            .import_secretkey_bytes(alg, self.bob_private)
-            .expect("failed to load Bob's secret key")
-            .into();
-        let bob_public = cal.public_key(&bob_private);
-
-        assert_eq!(
-            cal.export_publickey_bytes(&alice_public).as_ref(),
-            self.alice_public,
-            "Alice's public key not exported as expected"
-        );
-        assert_eq!(
-            cal.export_publickey_bytes(&bob_public).as_ref(),
-            self.bob_public,
-            "Bob's public key not exported as expected"
-        );
+        let (alice_private, alice_public) = self.test_key_import_export("Alice", cal);
+        let (bob_private, bob_public) = self.test_key_import_export("Bob", cal);
 
         let shared_ab = cal
             .shared_secret(&alice_private, &bob_public)
@@ -61,6 +41,68 @@ impl EccVector {
             cal.raw_secret_bytes(&shared_ba).as_ref(),
             self.shared_secret
         );
+    }
+
+    /// Test key import/export functionality of [`embedded_cal::DhProvider`].
+    ///
+    /// `name` must be either `Alice` or `Bob`.
+    fn test_key_import_export<C: embedded_cal::DhProvider>(
+        &self,
+        name: &'static str,
+        cal: &mut C,
+    ) -> (C::SecretKey, C::PublicKey) {
+        use embedded_cal::DhAlgorithm;
+        let alg =
+            C::Algorithm::from_cose_ecdh(self.ecdh_curve).expect("algorithm not supported by CAL");
+
+        let (private_bytes, public_bytes) = match name {
+            "Alice" => (self.alice_private, self.alice_public),
+            "Bob" => (self.bob_private, self.bob_public),
+            _ => panic!("name must be Alice or Bob"),
+        };
+
+        let private_visible = cal
+            .import_secretkey_bytes(alg.clone(), private_bytes)
+            .unwrap_or_else(|_| panic!("failed to load {name}'s secret key"));
+
+        // We cannot test export(import(x)) == x, because some implementations clamp on import
+        // (the nRF54L15 back-end pre-clamps X25519 and X448 scalars as in RFC7748's decodeScalar),
+        // and that operation loses information.
+        // Instead we are testing the idempotence export(import(export(import(x)))) == export(import(x)).
+        //
+        // The scope keeps `exported`'s borrow of `private_visible` from outliving the check;
+        // the returned `impl AsRef<[u8]>` may have a destructor, so NLL cannot end it early.
+        {
+            let exported = cal.export_secretkey_bytes(&private_visible);
+            let reimported = cal
+                .import_secretkey_bytes(alg.clone(), exported.as_ref())
+                .unwrap_or_else(|_| panic!("failed to re-import {name}'s exported secret key"));
+            assert_eq!(
+                cal.export_secretkey_bytes(&reimported).as_ref(),
+                exported.as_ref(),
+                "{name}'s secret key did not round-trip through export/import"
+            );
+        }
+
+        let private = private_visible.into();
+        let public = cal.public_key(&private);
+
+        assert_eq!(
+            cal.export_publickey_bytes(&public).as_ref(),
+            public_bytes,
+            "{name}'s public key not exported as expected"
+        );
+
+        let public_imported = cal
+            .import_publickey_bytes(alg.clone(), public_bytes)
+            .unwrap_or_else(|_| panic!("failed to import {name}'s public key"));
+        assert_eq!(
+            cal.export_publickey_bytes(&public_imported).as_ref(),
+            public_bytes,
+            "{name}'s public key did not round-trip through import/export"
+        );
+
+        (private, public)
     }
 }
 
@@ -106,3 +148,228 @@ pub const RFC5903_P256: &[EccVector] = &[EccVector {
     bob_public: &hex!("D12DFB52 89C8D4F8 1208B702 70398C34 2296970A 0BCCB74C 736FC755 4494BF63"),
     shared_secret: &hex!("D6840F6B 42F6EDAF D13116E0 E1256520 2FEF8E9E CE7DCE03 812464D0 4B9442DE"),
 }];
+
+/// Base point u-coordinate of X25519 (RFC 7748 section 4.1), little-endian.
+const X25519_BASE_U: [u8; 32] = {
+    let mut u = [0; 32];
+    u[0] = 9;
+    u
+};
+
+/// Base point u-coordinate of X448 (RFC 7748 section 4.2), little-endian.
+const X448_BASE_U: [u8; 56] = {
+    let mut u = [0; 56];
+    u[0] = 5;
+    u
+};
+
+/// Tests that exercise the [EC plumbing][embedded_cal::plumbing::ec] directly
+impl EccVector {
+    pub fn test_plumbing_p256<E: Ec>(&self, ec: &mut E) {
+        assert_eq!(self.ecdh_curve, 1, "vector is not a P-256 vector");
+        const {
+            assert!(
+                <E::PrimitivesP256 as EcPrimitives<P256>>::HAS_MULTIPLY_SCALAR_POINT,
+                "back-end does not implement P-256 scalar multiplication"
+            )
+        };
+        let p256 = ec.p256();
+
+        for (private, public) in [
+            (self.alice_private, self.alice_public),
+            (self.bob_private, self.bob_public),
+        ] {
+            // Scalar import/export round trip, independent of any multiplication
+            let d = p256
+                .import_scalar_bytes(private)
+                .expect("test vector scalar rejected");
+            assert_eq!(
+                p256.export_scalar_bytes(&d).as_ref(),
+                private,
+                "P-256 scalar did not survive an import/export round trip"
+            );
+
+            // d * G == the public key. Both generator coordinates are known constants, so this
+            // needs no point decompression.
+            let base = base_point_p256(p256);
+            let computed = p256.multiply_scalar_point(&d, &base);
+            let computed_x = p256.x_coord(&computed);
+            assert_eq!(
+                p256.export_scalar_bytes(&computed_x).as_ref(),
+                public,
+                "P-256 public key does not match the test vector"
+            );
+        }
+
+        // d_alice * Q_bob == Z == d_bob * Q_alice.
+        for (private, peer) in [
+            (self.alice_private, self.bob_public),
+            (self.bob_private, self.alice_public),
+        ] {
+            let d = p256
+                .import_scalar_bytes(private)
+                .expect("test vector scalar rejected");
+            let peer = point_from_compact_p256(p256, peer);
+            let shared = p256.multiply_scalar_point(&d, &peer);
+            let shared_x = p256.x_coord(&shared);
+            assert_eq!(
+                p256.export_scalar_bytes(&shared_x).as_ref(),
+                self.shared_secret,
+                "P-256 shared secret does not match the test vector"
+            );
+        }
+    }
+
+    pub fn test_plumbing_x25519<E: Ec>(&self, ec: &mut E) {
+        assert_eq!(self.ecdh_curve, 4, "vector is not an X25519 vector");
+        const {
+            assert!(
+                <E::PrimitivesX25519 as EcPrimitives<X25519>>::HAS_MULTIPLY_SCALAR_POINT,
+                "back-end does not implement X25519 scalar multiplication"
+            )
+        };
+        let x25519 = ec.x25519();
+
+        for (private, public) in [
+            (self.alice_private, self.alice_public),
+            (self.bob_private, self.bob_public),
+        ] {
+            let mut scalar: [u8; 32] = private.try_into().expect("vector has a 32 byte scalar");
+            embedded_cal::util::montgomery::clamp_x25519(&mut scalar);
+            let d = x25519
+                .import_scalar_bytes(&scalar)
+                .expect("test vector scalar rejected");
+            assert_eq!(
+                x25519.export_scalar_bytes(&d).as_ref(),
+                scalar,
+                "X25519 scalar did not survive an import/export round trip"
+            );
+
+            let base = montgomery_point(x25519, &X25519_BASE_U);
+            let computed = x25519.multiply_scalar_point(&d, &base);
+            let computed_u = x25519.x_coord(&computed);
+            assert_eq!(
+                x25519.export_scalar_bytes(&computed_u).as_ref(),
+                public,
+                "X25519 public key does not match the test vector"
+            );
+        }
+
+        for (private, peer) in [
+            (self.alice_private, self.bob_public),
+            (self.bob_private, self.alice_public),
+        ] {
+            let mut scalar: [u8; 32] = private.try_into().expect("vector has a 32 byte scalar");
+            embedded_cal::util::montgomery::clamp_x25519(&mut scalar);
+            let d = x25519
+                .import_scalar_bytes(&scalar)
+                .expect("test vector scalar rejected");
+
+            let mut peer_u: [u8; 32] = peer.try_into().expect("vector has a 32 byte u coordinate");
+            embedded_cal::util::montgomery::mask_u_x25519(&mut peer_u);
+            let peer = montgomery_point(x25519, &peer_u);
+
+            let shared = x25519.multiply_scalar_point(&d, &peer);
+            let shared_u = x25519.x_coord(&shared);
+            assert_eq!(
+                x25519.export_scalar_bytes(&shared_u).as_ref(),
+                self.shared_secret,
+                "X25519 shared secret does not match the test vector"
+            );
+        }
+    }
+
+    pub fn test_plumbing_x448<E: Ec>(&self, ec: &mut E) {
+        assert_eq!(self.ecdh_curve, 5, "vector is not an X448 vector");
+        const {
+            assert!(
+                <E::PrimitivesX448 as EcPrimitives<X448>>::HAS_MULTIPLY_SCALAR_POINT,
+                "back-end does not implement X448 scalar multiplication"
+            )
+        };
+        let x448 = ec.x448();
+
+        for (private, public) in [
+            (self.alice_private, self.alice_public),
+            (self.bob_private, self.bob_public),
+        ] {
+            let mut scalar: [u8; 56] = private.try_into().expect("vector has a 56 byte scalar");
+            embedded_cal::util::montgomery::clamp_x448(&mut scalar);
+            let d = x448
+                .import_scalar_bytes(&scalar)
+                .expect("test vector scalar rejected");
+            assert_eq!(
+                x448.export_scalar_bytes(&d).as_ref(),
+                scalar,
+                "X448 scalar did not survive an import/export round trip"
+            );
+
+            let base = montgomery_point(x448, &X448_BASE_U);
+            let computed = x448.multiply_scalar_point(&d, &base);
+            let computed_u = x448.x_coord(&computed);
+            assert_eq!(
+                x448.export_scalar_bytes(&computed_u).as_ref(),
+                public,
+                "X448 public key does not match the test vector"
+            );
+        }
+
+        for (private, peer) in [
+            (self.alice_private, self.bob_public),
+            (self.bob_private, self.alice_public),
+        ] {
+            let mut scalar: [u8; 56] = private.try_into().expect("vector has a 56 byte scalar");
+            embedded_cal::util::montgomery::clamp_x448(&mut scalar);
+            let d = x448
+                .import_scalar_bytes(&scalar)
+                .expect("test vector scalar rejected");
+            let peer = montgomery_point(x448, peer);
+
+            let shared = x448.multiply_scalar_point(&d, &peer);
+            let shared_u = x448.x_coord(&shared);
+            assert_eq!(
+                x448.export_scalar_bytes(&shared_u).as_ref(),
+                self.shared_secret,
+                "X448 shared secret does not match the test vector"
+            );
+        }
+    }
+}
+
+/// Builds the P-256 generator as a plumbing point.
+fn base_point_p256<P: EcPrimitives<P256>>(p256: &mut P) -> P::Point {
+    let x = p256
+        .import_scalar_bytes(&embedded_cal::util::p256::P256_GX_BYTES)
+        .expect("generator x is a valid scalar");
+    let y = p256
+        .import_scalar_bytes(&embedded_cal::util::p256::P256_GY_BYTES)
+        .expect("generator y is a valid scalar");
+    p256.point(x, y)
+}
+
+/// Builds a P-256 point from its compact (x-only) representation.
+fn point_from_compact_p256<P: EcPrimitives<P256>>(p256: &mut P, x: &[u8]) -> P::Point {
+    let x: &[u8; 32] = x.try_into().expect("vector has a 32 byte x coordinate");
+    let y = embedded_cal::util::p256::p256_recover_y(x).expect("vector point is on the curve");
+    let x = p256
+        .import_scalar_bytes(x)
+        .expect("test vector coordinate rejected");
+    let y = p256
+        .import_scalar_bytes(&y)
+        .expect("recovered coordinate rejected");
+    p256.point(x, y)
+}
+
+/// Builds a Montgomery curve point from its u coordinate.
+///
+/// The `y` coordinate is unused on these curves (see [`EcPrimitives::point()`]), but the interface
+/// demands one, so a zero scalar is passed.
+fn montgomery_point<C: Curve, P: EcPrimitives<C>>(primitives: &mut P, u: &[u8]) -> P::Point {
+    let unused_y = primitives
+        .import_scalar_bytes(&[0; 56][..u.len()])
+        .expect("zero is a valid scalar");
+    let u = primitives
+        .import_scalar_bytes(u)
+        .expect("test vector u coordinate rejected");
+    primitives.point(u, unused_y)
+}

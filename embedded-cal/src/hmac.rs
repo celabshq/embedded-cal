@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
+/// Message authentication based on hashes.
 pub trait HmacProvider {
     type Algorithm: HmacAlgorithm;
-    /// A nascent state that .
+    /// A nascent state that has only received a key as input.
     type Key: Clone + Sized;
     /// State carried between rounds of feeding data into the HMAC.
     type State: Sized;

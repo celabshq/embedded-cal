@@ -22,14 +22,26 @@ check-secret-independence = [
     "libcrux-iot-sha3/check-secret-independence",
 ]
 
+## Enables the `Extender::standalone()` constructor.
+standalone = ["embedded-cal-rand"]
+
 [dependencies]
-embedded-cal.path = "../embedded-cal"
+embedded-cal.workspace = true
 libcrux-iot-aes = "0.0.1-alpha.1"
 libcrux-iot-sha3 = "0.0.1-alpha.1"
-libcrux-secrets = { version = "0.0.6" }
+libcrux-iot-p256 = { version = "0.0.1-alpha.1", features = ["expose-hacl"] }
+libcrux-secrets = "0.0.6"
 libcrux-sha2 = "0.0.8"
-libcrux-traits = { version = "0.0.8", features = ["error-in-core"] }
-rand_core = "0.10"
+libcrux-traits = "0.0.8"
+
+rand_core.workspace = true
+
+embedded-cal-rand = { workspace = true, features = [
+    "new_from_sys",
+], optional = true }
 
 [dev-dependencies]
 testvectors.path = "../testvectors"
+embedded-cal-rand = { path = "../embedded-cal-rand", features = [
+    "new_from_sys",
+] }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
+/// Hashing of byte streams.
 pub trait HashProvider {
     type Algorithm: HashAlgorithm;
     /// State in which is carried between rounds of feeding data.

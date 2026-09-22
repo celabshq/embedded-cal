@@ -10,6 +10,7 @@ members = [
     "embedded-cal-stm32wba55",
     "testvectors",
     "embedded-cal-libcrux",
+    "embedded-cal-rand",
 ]
 default-members = [
     "embedded-cal",
@@ -17,6 +18,7 @@ default-members = [
     "embedded-cal-libcrux",
     "embedded-cal-software-demo",
     "testvectors",
+    "embedded-cal-rand",
 ]
 resolver = "3"
 
@@ -32,8 +34,18 @@ categories = [
     "embedded",
     "no-std::no-alloc",
 ]
-version = "0.1.0"
+version = "0.2.0-alpha.1"
 
 [workspace.dependencies]
-hax-lib.git = "https://github.com/hacspec/hax"
+hax-lib = "0.4.0"
 rand_core = { version = "0.10", default-features = false }
+embedded-cal = { version = "0.2.0-alpha.1", path = "./embedded-cal" }
+
+# We don't need to list all lockstepped workspace crates here, just those that
+# are being depended on.
+#
+# (And not all of them will be version-lockstepped forever.).
+embedded-cal-rand = { version = "0.2.0-alpha.1", path = "./embedded-cal-rand" }
+
+[workspace.metadata.release]
+sign-tag = true

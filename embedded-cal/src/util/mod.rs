@@ -2,6 +2,10 @@
 // SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 //! Tools helpful in implementing `embedded-cal`
 
+pub mod aesccm;
+pub mod montgomery;
+pub mod p256;
+
 /// A 2-variant generic enum, useful for writing implementations that provide some own variants on
 /// those passed on directly to a base.
 ///

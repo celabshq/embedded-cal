@@ -34,6 +34,7 @@ Limitation in AAD streaming or message size are subject to ongoing work.
 | ECDH on curve P-256 | nrf54l15 | |
 | ECDH on curve X25519 | nrf54l15 | |
 | ECDH on curve X448 | nrf54l15 | |
+| ECDH on P-256 | libcrux || 
 
 # Hash
 
@@ -41,7 +42,7 @@ Limitation in AAD streaming or message size are subject to ongoing work.
 |-----------|----------------|-------|
 | SHA-256 | libcrux | |
 | SHA-256 | rustcrypto | |
-| SHA-256 | software-demo | using SHA2-short plumbing for acceleration |
+| SHA-256 | software-demo | optionally providing and using SHA2-short plumbing |
 | SHA2-short | nrf54l15 | providing plumbing |
 | SHA2-short | stm32wba55 | providing plumbing |
 | SHA3-224 | libcrux | |
@@ -64,3 +65,13 @@ Limitation in AAD streaming or message size are subject to ongoing work.
 | HKDF on HMAC w/ SHA-256 | rustcrypto | **not** using any SHA-256 acceleration |
 | HKDF on HMAC w/ SHA-256 | software-demo | **not** using any SHA-256 acceleration|
 | HKDF on HMAC w/ SHA-256 | stm32wba55 | |
+
+# RNG
+
+… has no algorithms in the same sense as the others, but is provided by these implementations:
+
+| Implementation     | Notes |
+|--------------------|-------|
+| embedded-cal-rand  | mixes in an existing RNG, or (feature-gated) takes the system one |
+| nrf54l15 | using CRACENCORE peripheral |
+| stm32wba55 | using RNG peripheral |

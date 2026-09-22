@@ -9,12 +9,14 @@
 use embedded_cal::{Cal, accessor::*, plumbing::Plumbing};
 
 mod hash;
+mod hash_plumbing;
 mod hkdf;
 mod hmac;
 mod rng;
 
 pub trait ExtenderConfig {
     const IMPLEMENT_SHA2SHORT: bool;
+    const IMPLEMENT_SHA2SHORT_PLUMBING: bool;
 
     type Base: Cal + Plumbing;
 }
@@ -22,6 +24,10 @@ pub trait ExtenderConfig {
 impl<EC: ExtenderConfig> Extender<EC> {
     pub fn new(base: EC::Base) -> Self {
         Self(base)
+    }
+
+    pub fn destruct(self) -> EC::Base {
+        self.0
     }
 }
 
@@ -51,7 +57,27 @@ impl<EC: ExtenderConfig> embedded_cal::Cal for Extender<EC> {
     }
 }
 
-#[cfg(test)]
-pub(crate) mod tests {
-    pub(crate) mod dummy_sha256;
+impl<EC: ExtenderConfig> embedded_cal::plumbing::ec::Ec for Extender<EC> {
+    const MAX_SCALAR_LENGTH: usize =
+        <EC::Base as embedded_cal::plumbing::ec::Ec>::MAX_SCALAR_LENGTH;
+
+    type PrimitivesP256 = <EC::Base as embedded_cal::plumbing::ec::Ec>::PrimitivesP256;
+    type PrimitivesX25519 = <EC::Base as embedded_cal::plumbing::ec::Ec>::PrimitivesX25519;
+    type PrimitivesX448 = <EC::Base as embedded_cal::plumbing::ec::Ec>::PrimitivesX448;
+
+    fn p256(&mut self) -> &mut Self::PrimitivesP256 {
+        self.0.p256()
+    }
+
+    fn x25519(&mut self) -> &mut Self::PrimitivesX25519 {
+        self.0.x25519()
+    }
+
+    fn x448(&mut self) -> &mut Self::PrimitivesX448 {
+        self.0.x448()
+    }
 }
+
+impl<EC: ExtenderConfig> embedded_cal::plumbing::hash::Hash for Extender<EC> {}
+
+impl<EC: ExtenderConfig> embedded_cal::plumbing::Plumbing for Extender<EC> {}

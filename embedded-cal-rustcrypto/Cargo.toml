@@ -12,22 +12,26 @@ categories.workspace = true
 version.workspace = true
 
 [dependencies]
-aes = { version = "0.8.3", default-features = false }
-ccm = { version = "0.5.0", default-features = false }
-digest = "0.10.7"
-embedded-cal.path = "../embedded-cal"
+aes = { version = "0.9.3", default-features = false }
+ccm = { version = "0.6.1", default-features = false }
+digest = "0.11.3"
+embedded-cal.workspace = true
 heapless = { version = "0.9.3", features = ["zeroize"] }
-hmac = { version = "0.12.1", default-features = false }
-p256 = { version = "0.13.2", default-features = false, features = ["ecdh"] }
-sha2 = { version = "0.10.9", default-features = false }
-testvectors.path = "../testvectors"
+hmac = { version = "0.13.0", default-features = false }
+p256 = { version = "0.14.0", default-features = false, features = ["ecdh"] }
+sha2 = { version = "0.11.0", default-features = false }
 zeroize = { version = "1.8.2", default-features = false }
 
-getrandom = { version = "0.4", default-features = false }
+generic-array = "1.4.0"
+
 rand_core.workspace = true
-# needed for p256 generation
-rand_core_06 = { package = "rand_core", version = "0.6" }
-x25519-dalek = { version = "2.0.1", default-features = false, features = ["static_secrets", "zeroize"] }
+x25519-dalek = { version = "3.0.0", default-features = false, features = ["static_secrets", "zeroize"] }
+
+embedded-cal-rand = { workspace = true, features = ["new_from_sys"], optional = true }
+
+[dev-dependencies]
+embedded-cal-rand = { workspace = true, features = ["new_from_sys"] }
+testvectors.path = "../testvectors"
 
 [features]
 ## Enables the use of the system allocator for AEAD algorithms.
@@ -41,3 +45,6 @@ x25519-dalek = { version = "2.0.1", default-features = false, features = ["stati
 ## is allocated inside the `Cal` instance, and exceeding that size is treated
 ## similar to a memory allocation failure, resulting in a panic.
 alloc = []
+
+## Enables the `Standalone::standalone()` constructor.
+standalone = ["embedded-cal-rand"]

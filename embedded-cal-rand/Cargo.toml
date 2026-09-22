@@ -2,10 +2,11 @@
 # SPDX-FileCopyrightText: Inria-AIO, Cryspen, and Christian Amsüss
 
 [package]
-name = "embedded-cal-software-demo"
+name = "embedded-cal-rand"
+description = "Making a cryptographically secure random number generator accessible in embedded-cal"
+
 edition.workspace = true
 license.workspace = true
-readme.workspace = true
 repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
@@ -13,7 +14,11 @@ version.workspace = true
 
 [dependencies]
 embedded-cal.workspace = true
+
 rand_core.workspace = true
 
-[dev-dependencies]
-testvectors.path = "../testvectors"
+rand = {version = "0.10", optional = true, features = ["std_rng", "sys_rng"], default-features = false }
+
+[features]
+## Enables the [`WithRng::new_with_sys()`] constructor.
+new_from_sys = ["dep:rand"]
