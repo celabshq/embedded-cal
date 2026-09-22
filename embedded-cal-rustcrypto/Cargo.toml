@@ -20,7 +20,6 @@ heapless = { version = "0.9.3", features = ["zeroize"] }
 hmac = { version = "0.13.0", default-features = false }
 p256 = { version = "0.14.0", default-features = false, features = ["ecdh"] }
 sha2 = { version = "0.11.0", default-features = false }
-testvectors.path = "../testvectors"
 zeroize = { version = "1.8.2", default-features = false }
 
 generic-array = "1.4.0"
@@ -28,10 +27,11 @@ generic-array = "1.4.0"
 rand_core.workspace = true
 x25519-dalek = { version = "3.0.0", default-features = false, features = ["static_secrets", "zeroize"] }
 
-embedded-cal-rand = { path = "../embedded-cal-rand", features = ["new_from_sys"], optional = true }
+embedded-cal-rand = { workspace = true, features = ["new_from_sys"], optional = true }
 
 [dev-dependencies]
-embedded-cal-rand = { path = "../embedded-cal-rand", features = ["new_from_sys"] }
+embedded-cal-rand = { workspace = true, features = ["new_from_sys"] }
+testvectors.path = "../testvectors"
 
 [features]
 ## Enables the use of the system allocator for AEAD algorithms.

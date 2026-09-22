@@ -33,7 +33,7 @@ libcrux-traits = "0.0.8"
 
 rand_core.workspace = true
 
-embedded-cal-rand = { path = "../embedded-cal-rand", features = ["new_from_sys"], optional = true }
+embedded-cal-rand = { workspace = true, features = ["new_from_sys"], optional = true }
 
 [dev-dependencies]
 testvectors.path = "../testvectors"
